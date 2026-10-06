@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>mark.sobolev@cscs.ch</email>
+		<name>Mark Sobolev</name>
+	</maintainer>
+	<longdescription lang="en">
+		mcpproxy is a local gateway for Model Context Protocol (MCP)
+		servers: tool quarantine with review, tiered read/write profiles,
+		audit logging, and secret references resolved at runtime from the
+		Secret Service. Front-ends multiple stdio/SSE MCP upstreams (e.g.
+		mcp-atlassian) behind a single local endpoint for AI clients.
+	</longdescription>
+	<upstream>
+		<bugs-to>https://github.com/smart-mcp-proxy/mcpproxy-go/issues</bugs-to>
+		<remote-id type="github">smart-mcp-proxy/mcpproxy-go</remote-id>
+	</upstream>
+</pkgmetadata>
