@@ -4,7 +4,7 @@
 EAPI=8
 
 EGIT_REPO_URI="https://github.com/eth-cscs/cscs-key.git"
-RUST_MIN_VER="1.85"
+RUST_MIN_VER="1.88.0"
 
 inherit cargo git-r3 shell-completion
 
