@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>mark.sobolev@cscs.ch</email>
+		<name>Mark Sobolev</name>
+	</maintainer>
+	<longdescription lang="en">
+		cscs-key is a command-line tool to manage SSH keys for the Swiss
+		National Supercomputing Centre (CSCS). It allows users to sign,
+		list, and revoke SSH keys associated with their CSCS account.
+		Authentication is done via OpenID Connect; the resulting token is
+		cached locally.
+	</longdescription>
+	<upstream>
+		<bugs-to>https://github.com/eth-cscs/cscs-key/issues</bugs-to>
+		<remote-id type="github">eth-cscs/cscs-key</remote-id>
+	</upstream>
+</pkgmetadata>
