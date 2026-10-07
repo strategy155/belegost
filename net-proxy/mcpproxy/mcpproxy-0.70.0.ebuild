@@ -20,8 +20,12 @@ LICENSE="Apache-2.0 BSD BSD-2 MIT MIT-Lucent"
 SLOT="0"
 KEYWORDS="~amd64"
 
-# frontend build: vue-tsc + vite (upstream engines floor: node >=22.18.0)
-BDEPEND=">=net-libs/nodejs-22.18[npm]"
+# go floor per go.mod directive (eclass default is 1.24.11 and would be
+# clobbered by this assignment anyway); frontend: node >=22.18 (engines)
+BDEPEND="
+	>=dev-lang/go-1.26.0
+	>=net-libs/nodejs-22.18[npm]
+"
 
 src_prepare() {
 	default
