@@ -1,0 +1,4 @@
+# Extend inherited group definitions; see ::gentoo profiles/license_groups
+# (portage concatenates this file across repos) and the same pattern in
+# ::guru. MIT-Lucent: net-proxy/mcpproxy (github.com/dop251/goja ftoa).
+MISC-FREE MIT-Lucent
