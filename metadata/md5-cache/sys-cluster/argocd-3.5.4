@@ -1,0 +1,12 @@
+BDEPEND=>=dev-lang/go-1.26.3 >=dev-lang/go-1.24.11:= app-arch/unzip
+DEFINED_PHASES=compile install unpack
+DESCRIPTION=CLI for Argo CD, declarative GitOps continuous delivery for Kubernetes
+EAPI=8
+HOMEPAGE=https://argo-cd.readthedocs.io https://github.com/argoproj/argo-cd
+INHERIT=go-module shell-completion
+KEYWORDS=~amd64
+LICENSE=Apache-2.0 BSD BSD-2 Boost-1.0 ISC MIT MPL-2.0 Unlicense
+SLOT=0
+SRC_URI=https://github.com/argoproj/argo-cd/archive/refs/tags/v3.5.4.tar.gz -> argocd-3.5.4.tar.gz https://github.com/strategy155/menegroth/releases/download/argocd-3.5.4/argocd-3.5.4-deps.tar.xz
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	sysroot	4c36abaf94ebd3ab32f8abea9a444121	go-env	fca4e820393c2eac25a944be8bdf6a3a	go-module	3d4b6f3f29b3ebdeb708785b3cb1743b	shell-completion	42587a281b8b546975e45fad82edcb50
+_md5_=2d85b6528d94dfcc2b2f7f7a62f6ef08
