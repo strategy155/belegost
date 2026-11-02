@@ -26,6 +26,12 @@ KEYWORDS="~amd64"
 RDEPEND="net-libs/nodejs"
 BDEPEND="net-libs/nodejs[npm]"
 
+# npm tarball top dir is "package" - but it is never unpacked: npm
+# consumes it directly from ${DISTDIR} (GURU dev-util/bash-language-
+# server form).  S=${WORKDIR} satisfies the prepare-phase S-existence
+# check against the empty workdir that src_unpack leaves in place.
+S="${WORKDIR}"
+
 # NOTE: to regenerate the npm-cache tarball:
 #   npm --cache ./npm-cache install <distdir>/${P}.tgz
 #   tar -caf ${P}-npm-cache.tar.xz npm-cache
