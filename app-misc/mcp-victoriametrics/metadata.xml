@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>mark.sobolev@cscs.ch</email>
+		<name>Mark Sobolev</name>
+	</maintainer>
+	<longdescription lang="en">
+		mcp-victoriametrics is a Model Context Protocol (MCP) server
+		for VictoriaMetrics: metrics query and analysis over PromQL/
+		MetricsQL, configured entirely via MCP_* and VMC_* environment
+		variables (no CLI flag framework upstream). Builds from the
+		self-contained source tarball - the tag commits a full
+		vendor/ tree (71 modules), so no deps hosting is needed.
+	</longdescription>
+	<upstream>
+		<bugs-to>https://github.com/VictoriaMetrics/mcp-victoriametrics/issues</bugs-to>
+		<remote-id type="github">VictoriaMetrics/mcp-victoriametrics</remote-id>
+	</upstream>
+</pkgmetadata>
