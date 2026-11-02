@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>mark.sobolev@cscs.ch</email>
+		<name>Mark Sobolev</name>
+	</maintainer>
+	<longdescription lang="en">
+		mcp-server-kibana is a Model Context Protocol (MCP) server
+		exposing Kibana functionality (8.x OpenAPI spec) to AI clients:
+		multi-space support, match_phrase search over data streams
+		with @timestamp-ascending result dumps, and read-only
+		guardrails. Designed to run behind an MCP gateway (mcpproxy)
+		via stdio transport; vendored npm cache installs fully
+		offline at emerge time.
+	</longdescription>
+	<upstream>
+		<bugs-to>https://github.com/TocharianOU/MCP-Server-Kibana/issues</bugs-to>
+		<remote-id type="github">TocharianOU/MCP-Server-Kibana</remote-id>
+	</upstream>
+</pkgmetadata>
