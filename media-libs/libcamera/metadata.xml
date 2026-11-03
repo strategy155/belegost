@@ -17,6 +17,16 @@
 		ThinkPad X1 Carbon Gen 14 / Panther Lake IPU7 via the simple
 		pipeline handler and software ISP).
 	</longdescription>
+	<use>
+		<flag name="drm">Build with drm support for cam tool</flag>
+		<flag name="elfutils">Build with improved debugging using <pkg>dev-libs/elfutils</pkg></flag>
+		<flag name="gui">Build QCam extra tool</flag>
+		<flag name="openssl">Verify IPA modules signatures using <pkg>dev-libs/openssl</pkg>. Note:<pkg>dev-libs/openssl</pkg> is also required at build time to sign IPA modules.</flag>
+		<flag name="sdl">Build Cam extra tool with SDL sink support (requires USE=gui)</flag>
+		<flag name="tools">Build extra tools (including cam, qcam and lc-compliance). Note: 'qcam' requires also USE="gui"</flag>
+		<flag name="trace">Build with tracing capabilities</flag>
+		<flag name="unwind">Build with improved debugging using <pkg>sys-libs/libunwind</pkg> (has no effect if USE=elfutils is set)</flag>
+	</use>
 	<upstream>
 		<remote-id type="freedesktop-gitlab">camera/libcamera</remote-id>
 		<bugs-to>https://git.libcamera.org/guest/projects/libcamera/issues</bugs-to>
