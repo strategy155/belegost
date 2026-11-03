@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>mark.sobolev@cscs.ch</email>
+		<name>Mark Sobolev</name>
+	</maintainer>
+	<longdescription lang="en">
+		libcamera is a complex camera support library for Linux, Android,
+		and ChromeOS. It is designed to support the low-level native camera
+		hardware of embedded platforms (including IPU, CPE, and image sensor
+		devices) and the higher-level system integration needed for complex
+		mobile and IoT devices.
+
+		This overlay tracks upstream closely: 0.8.0 "Prague" is the first
+		release containing imx471 sensor support (Sony IMX471, used on
+		ThinkPad X1 Carbon Gen 14 / Panther Lake IPU7 via the simple
+		pipeline handler and software ISP).
+	</longdescription>
+	<upstream>
+		<remote-id type="freedesktop-gitlab">camera/libcamera</remote-id>
+		<bugs-to>https://git.libcamera.org/guest/projects/libcamera/issues</bugs-to>
+	</upstream>
+</pkgmetadata>
