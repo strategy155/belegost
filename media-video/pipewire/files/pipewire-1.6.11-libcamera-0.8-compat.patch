@@ -1,19 +1,35 @@
-From 54f2f51f5233026e608f8235f5377b9b473918e3 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Barnab=C3=A1s=20P=C5=91cze?= <pobrn@protonmail.com>
-Date: Tue, 27 Oct 2026 21:28:56 +0100
-Subject: [PATCH] spa: libcamera: device: 0.8 compatibility
+From 54f2f51f5233026e608f8235f5377b9b473918e3, amended locally
+Subject: [PATCH] spa: libcamera: device: 0.8 compatibility (amended)
 
-Version 0.8 of libcamera has incompatible changes, so adjust the code,
-while keeping compatibility with older versions as well.
+Carries upstream commit 54f2f51f5233026e608f8235f5377b9b473918e3
+("spa: libcamera: device: 0.8 compatibility", Barnabás Pőcze), merged
+to pipewire master after the 1.6.11 tag, plus one local amendment:
+
+the version guard relies on LIBCAMERA_VERSION_MAJOR and
+LIBCAMERA_VERSION_MINOR, which are defined in libcamera/version.h —
+a header that spa/plugins/libcamera/libcamera-device.cpp never
+included. Without the include, the macros evaluate to 0 in the
+preprocessor, the guard selects the #else (pre-0.8) branch, and
+compilation against libcamera 0.8 fails with the original enum
+errors. The amendment adds the include so the guard can see the
+installed libcamera version (MAJOR=0, MINOR=8), while 0.7
+compatibility is preserved via the #else branch.
 ---
- spa/plugins/libcamera/libcamera-device.cpp | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ spa/plugins/libcamera/libcamera-device.cpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
 diff --git a/spa/plugins/libcamera/libcamera-device.cpp b/spa/plugins/libcamera/libcamera-device.cpp
-index c15a9fa2a..6b8ad4151 100644
 --- a/spa/plugins/libcamera/libcamera-device.cpp
 +++ b/spa/plugins/libcamera/libcamera-device.cpp
-@@ -78,12 +78,21 @@ const char *cameraLoc(const Camera& camera)
+@@ -28,6 +28,7 @@
+ 
+ #include <libcamera/camera.h>
+ #include <libcamera/property_ids.h>
++#include <libcamera/version.h>
+ 
+ using namespace libcamera;
+ 
+@@ -69,12 +70,21 @@
  {
  	if (auto location = camera.properties().get(properties::Location)) {
  		switch (location.value()) {
@@ -35,5 +51,3 @@ index c15a9fa2a..6b8ad4151 100644
  		}
  	}
  
--- 
-GitLab
