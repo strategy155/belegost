@@ -1,0 +1,12 @@
+diff --git a/dist/index.js b/dist/index.js
+index 112ceb2..52be1f0 100755
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -38,6 +38,7 @@ function createKibanaClient(config) {
+         headers: {
+             'Content-Type': 'application/json',
+             'kbn-xsrf': 'true',
++            'elastic-api-version': '1',
+             'x-elastic-internal-origin': 'kibana'
+         },
+     };
