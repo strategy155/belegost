@@ -1,0 +1,13 @@
+BDEPEND=dev-build/cmake
+DEFINED_PHASES=compile config install postinst prepare
+DEPEND=acct-group/wazuh acct-user/wazuh audit? ( sys-process/audit ) selinux? ( sec-policy/selinux-base-policy ) dev-libs/cjson dev-libs/libpcre2 dev-libs/libyaml dev-libs/msgpack dev-libs/openssl:= dev-cpp/nlohmann_json dev-cpp/cpp-httplib dev-db/sqlite:3 net-misc/curl sys-apps/dbus sys-libs/zlib app-arch/rpm !!net-analyzer/ossec-hids
+DESCRIPTION=Wazuh agent - host intrusion detection agent (OSSEC fork)
+EAPI=8
+HOMEPAGE=https://wazuh.com https://github.com/wazuh/wazuh
+IUSE=audit selinux
+KEYWORDS=~amd64
+LICENSE=AGPL-3.0 GPL-2 LGPL-2.1 LGPL-2.1+
+RDEPEND=acct-group/wazuh acct-user/wazuh audit? ( sys-process/audit ) selinux? ( sec-policy/selinux-base-policy ) dev-libs/cjson dev-libs/libpcre2 dev-libs/libyaml dev-libs/msgpack dev-libs/openssl:= dev-cpp/nlohmann_json dev-cpp/cpp-httplib dev-db/sqlite:3 net-misc/curl sys-apps/dbus sys-libs/zlib app-arch/rpm !!net-analyzer/ossec-hids
+SLOT=0
+SRC_URI=https://github.com/wazuh/wazuh/archive/v4.14.10.tar.gz -> wazuh-agent-4.14.10.tar.gz https://packages.wazuh.com/deps/55/libraries/sources/libbpf-bootstrap.tar.gz https://packages.wazuh.com/deps/55/libraries/sources/libdb.tar.gz https://packages.wazuh.com/deps/55/libraries/sources/procps.tar.gz https://github.com/wazuh/wazuh-http-request/tarball/cd50797cfe03c27f3759bdc243fecca6f7535d35 -> wazuh-http-request-cd50797.tar.gz
+_md5_=ab4041f105c89162d3187a05127a3dec

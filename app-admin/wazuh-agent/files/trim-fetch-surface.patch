@@ -1,0 +1,20 @@
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -939,7 +939,7 @@
+ endif
+ 
+ .PHONY: external test_external
+-external: test_external $(EXTERNAL_LIBS) $(JEMALLOC_LIB)
++external: test_external $(EXTERNAL_LIBS) $(DB_LIB)
+ 
+ ifneq (,$(filter ${TEST},YES yes y Y 1))
+ external: build_gtest build_benchmark
+@@ -1409,7 +1409,7 @@
+ endif
+ 
+ # Agent dependencies
+-EXTERNAL_RES := cJSON curl libdb libffi libyaml openssl procps sqlite zlib audit-userspace msgpack bzip2 nlohmann googletest libpcre2 libplist pacman libarchive popt lua rpm rocksdb lzma cpp-httplib benchmark libbpf-bootstrap dbus
++EXTERNAL_RES := libdb libbpf-bootstrap procps
+ ifneq (${TARGET},agent)
+ ifneq (${TARGET},winagent)
+ 	# Manager extra dependency

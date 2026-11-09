@@ -1,0 +1,50 @@
+#!/sbin/openrc-run
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+# kea-style parameterized init script (net-misc/kea precedent): one
+# script instantiated per daemon via dosym.  RC_SVCNAME selects the
+# daemon binary; the wazuh-agentd instance is the canonical service
+# the remaining four are symlinked from.
+#
+# The pidfile problem this resolves: the Wazuh daemons fork by default
+# and write pid-embedded pidfiles (<daemon>-<pid>.pid under
+# /var/ossec/var/run/) - no static path for OpenRC to track.  All five
+# daemons accept -f (run in foreground; verified in their main.c),
+# so each service runs its daemon foregrounded under
+# start-stop-daemon --background with a static pidfile - the same
+# model wazuh-control works around with its pstatus() globs.
+
+command="/var/ossec/bin/${RC_SVCNAME}"
+command_args="-f"
+command_background=yes
+pidfile="/run/${RC_SVCNAME}.pid"
+
+description="Wazuh agent daemon (${RC_SVCNAME})"
+
+# Start order mirrors wazuh-control's SDAEMONS sequence
+# (src/init/wazuh-client.sh): execd -> agentd -> syscheckd ->
+# logcollector -> modulesd; the depend() edges reproduce the same
+# chain.  The agent daemon additionally needs the network.
+depend() {
+	case "${RC_SVCNAME}" in
+		wazuh-execd)
+			;;
+		wazuh-agentd)
+			need net
+			;;
+		wazuh-syscheckd)
+			need wazuh-agentd
+			;;
+		wazuh-logcollector)
+			need wazuh-syscheckd
+			;;
+		wazuh-modulesd)
+			need wazuh-logcollector
+			;;
+		*)
+			eerror "Unknown Wazuh agent daemon: ${RC_SVCNAME}"
+			return 1
+			;;
+	esac
+}

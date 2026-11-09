@@ -1,0 +1,8 @@
+# Wazuh agent daemon configuration (/etc/conf.d/<daemon>)
+#
+# The daemon binary is selected by the service name (RC_SVCNAME);
+# per-daemon overrides belong here.  The daemons run as root (they
+# must read system files for inventory - mirrored by the upstream
+# design and the tthh430 confd's WA_USER="root").
+
+# WAZUH_HOME="/var/ossec"
