@@ -34,7 +34,7 @@ RDEPEND="
 	acct-user/wazuh
 	audit? ( sys-process/audit )
 	selinux? ( sec-policy/selinux-base-policy )
-	dev-libs/cjson
+	dev-libs/cJSON
 	dev-libs/libpcre2
 	dev-libs/libyaml
 	dev-libs/msgpack
