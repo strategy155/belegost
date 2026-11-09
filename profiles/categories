@@ -1,0 +1,7 @@
+# Categories carried by this overlay beyond the masters' set.
+# (acct-group and acct-user are ::gentoo categories listed here so the
+# overlay-local packages resolve without depending on the masters'
+# profiles being mounted in this sandbox.)
+acct-group
+acct-user
+app-admin
