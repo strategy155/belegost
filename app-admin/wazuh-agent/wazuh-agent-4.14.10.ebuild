@@ -89,6 +89,18 @@ src_prepare() {
 		"${S}/src/shared_modules/http-request" || die
 	cp "${DISTDIR}/wazuh-http-request-cd50797.tar.gz" \
 		"${S}/src/shared_modules/http-request.tar.gz" || die
+
+	# libbpf-bootstrap's CMakeLists downloads modern.bpf.c at configure
+	# time from a hardcoded v4.12.0 raw.githubusercontent URL - blocked
+	# by the sandbox, and pinned to the wrong branch besides.  The file
+	# ships in our tag tree; place it where the existence check looks
+	# and drop the download line (the patch set cannot reach this file:
+	# PATCHES apply before the vendored trees are relocated into ${S}).
+	mkdir -p "${S}/src/external/libbpf-bootstrap/src" || die
+	cp "${S}/src/syscheckd/src/ebpf/src/modern.bpf.c" \
+		"${S}/src/external/libbpf-bootstrap/src/modern.bpf.c" || die
+	sed -i '/file(DOWNLOAD/d' \
+		"${S}/src/external/libbpf-bootstrap/CMakeLists.txt" || die
 }
 
 src_compile() {
