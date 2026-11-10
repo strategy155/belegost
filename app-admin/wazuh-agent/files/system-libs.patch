@@ -27,7 +27,7 @@
 +# libwazuhext.so; the daemons link libwazuhext.so and inherit the
 +# DT_NEEDED entries transitively.
 +EXTERNAL_LIBS := $(PROCPS_LIB)
-+OSSEC_LIBS += -lz -lpcre2-8 -lssl -lcrypto -lsqlite3 -lyaml -lcurl -lmsgpackc -lcjson -ldbus-1 -lrpm
++OSSEC_LIBS += -lz -lpcre2-8 -lssl -lcrypto -lsqlite3 -lyaml -lcurl -lmsgpack-c -lcjson -ldbus-1 -lrpm
 +ifneq (,$(filter ${USE_AUDIT},YES yes y Y 1))
 +OSSEC_LIBS += -laudit
 +endif

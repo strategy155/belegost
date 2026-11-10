@@ -138,7 +138,7 @@ src_compile() {
 		WAZUH_USER=wazuh
 		WAZUH_GROUP=wazuh
 	)
-	use audit && mymakeargs+=( USE_AUDIT=yes )
+	mymakeargs+=( USE_AUDIT=$(usex audit yes no) )
 	use selinux && mymakeargs+=( USE_SELINUX=yes )
 
 	emake -C src EXTERNAL_SRC_ONLY=yes "${mymakeargs[@]}" deps
