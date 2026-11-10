@@ -17,7 +17,7 @@ DESCRIPTION="Kibana MCP server (8.x OpenAPI spec, multi-space)"
 HOMEPAGE="https://github.com/TocharianOU/MCP-Server-Kibana"
 SRC_URI="
 	https://registry.npmjs.org/@tocharianou/${PN}/-/${PN}-${PV}.tgz
-	https://github.com/strategy155/menegroth/releases/download/${PV}/${PV}-npm-cache.tar.xz
+	https://github.com/strategy155/menegroth/releases/download/${P}/${P}-npm-cache.tar.xz
 "
 
 # package itself Apache-2.0; license scan of the offline-resolved
@@ -63,7 +63,7 @@ src_unpack() {
 	# ${DISTDIR} by src_install and never unpacked (GURU
 	# dev-util/bash-language-server form)
 	cd "${T}" || die "Could not cd to temporary directory"
-	unpack ${PV}-npm-cache.tar.xz
+	unpack ${P}-npm-cache.tar.xz
 }
 
 src_install() {
