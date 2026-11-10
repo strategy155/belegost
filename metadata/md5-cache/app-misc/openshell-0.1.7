@@ -1,0 +1,16 @@
+BDEPEND=dev-libs/protobuf[protoc(+)] dev-build/cmake virtual/pkgconfig || ( >=dev-lang/rust-bin-1.94.1:* >=dev-lang/rust-1.94.1:* )
+DEFINED_PHASES=compile configure install postinst setup test unpack
+DEPEND=sci-mathematics/z3:=
+DESCRIPTION=Safe, private runtime for autonomous AI agents
+EAPI=8
+HOMEPAGE=https://docs.nvidia.com/openshell/ https://github.com/NVIDIA/OpenShell
+INHERIT=cargo shell-completion
+IUSE=debug
+KEYWORDS=~amd64
+LICENSE=0BSD Apache-2.0 Boost-1.0 BSD BSD-2 BZIP2 CC0-1.0 CDLA-Permissive-2.0 ISC LGPL-2.1+ MIT MPL-2.0 Unicode-3.0 Unicode-DFS-2016 Unlicense WTFPL-2 ZLIB
+RDEPEND=sci-mathematics/z3:=
+RESTRICT=test
+SLOT=0
+SRC_URI=https://github.com/NVIDIA/OpenShell/archive/v0.1.7.tar.gz -> openshell-0.1.7.tar.gz https://github.com/strategy155/menegroth/releases/download/openshell-0.1.7/openshell-0.1.7-crates.tar.xz
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	rust	82f6599073a7368d12da31294f4a9aff	rust-toolchain	76468983281b0a7fc167ca224f84ecfd	cargo	f37054abdadccfe8287ecf965ef5748f	shell-completion	42587a281b8b546975e45fad82edcb50
+_md5_=1f6fad6f6974ac5828f977ed86f138c1

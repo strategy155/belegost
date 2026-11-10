@@ -1,0 +1,15 @@
+BDEPEND=dev-libs/protobuf[protoc(+)] dev-build/cmake virtual/pkgconfig || ( >=dev-lang/rust-bin-1.94.1:* >=dev-lang/rust-1.94.1:* ) >=dev-vcs/git-1.8.2.1[curl]
+DEFINED_PHASES=compile configure install postinst setup test unpack
+DEPEND=sci-mathematics/z3:=
+DESCRIPTION=Safe, private runtime for autonomous AI agents
+EAPI=8
+HOMEPAGE=https://docs.nvidia.com/openshell/ https://github.com/NVIDIA/OpenShell
+INHERIT=cargo git-r3 shell-completion
+IUSE=debug
+LICENSE=Apache-2.0
+PROPERTIES=live live
+RDEPEND=sci-mathematics/z3:=
+RESTRICT=test
+SLOT=0
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	rust	82f6599073a7368d12da31294f4a9aff	rust-toolchain	76468983281b0a7fc167ca224f84ecfd	cargo	f37054abdadccfe8287ecf965ef5748f	git-r3	e6c2f983e006e805160436c75a0c1562	shell-completion	42587a281b8b546975e45fad82edcb50
+_md5_=242dc675fd5993fbb9f0b7a7d9b4847b
