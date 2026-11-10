@@ -1,0 +1,84 @@
+--- a/src/external/libbpf-bootstrap/CMakeLists.txt
++++ b/src/external/libbpf-bootstrap/CMakeLists.txt
+@@ -10,49 +10,10 @@
+ 
+ # Build vendored libbpf
+ # Clone libbpf repository
+-include(ExternalProject)
+-ExternalProject_Add(libbpf
+-  PREFIX libbpf
+-  GIT_REPOSITORY https://github.com/libbpf/libbpf.git
+-  GIT_TAG v1.7.0  # v1.4.0: f11758a7807893330cc87481a7a16cf956326ab3
+-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libbpf
+-  CONFIGURE_COMMAND ""
+-  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src && make CFLAGS="-fPIC${CFLAGS}" LDFLAGS="-lelf${LDFLAGS}"
+-    OBJDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf
+-    DESTDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf
+-    INCLUDEDIR=
+-    LIBDIR=
+-    UAPIDIR=
+-    install install_uapi_headers
+-  BUILD_IN_SOURCE TRUE
+-  INSTALL_COMMAND ""
+-  STEP_TARGETS build
+-)
+ 
+ # Clone bpftool repository
+-ExternalProject_Add(bpftool
+-  PREFIX bpftool
+-  GIT_REPOSITORY https://github.com/libbpf/bpftool.git
+-  GIT_TAG v7.7.0
+-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bpftool
+-  CONFIGURE_COMMAND ""
+-  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/bpftool/src && make bootstrap
+-    OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/bpftool/
+-  BUILD_IN_SOURCE TRUE
+-  INSTALL_COMMAND ""
+-  STEP_TARGETS build
+-)
+ 
+ # Clone vmlinux.h repository
+-ExternalProject_Add(vmlinux.h
+-  PREFIX vmlinux.h
+-  GIT_REPOSITORY https://github.com/libbpf/vmlinux.h.git
+-  GIT_TAG main
+-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vmlinux.h
+-  CONFIGURE_COMMAND ""
+-  BUILD_COMMAND ""
+-  INSTALL_COMMAND ""
+-)
+ 
+ # Set the path to clang (update if necessary)
+ set(CLANG_PATH "/usr/bin/clang")
+@@ -81,24 +42,20 @@
+ # Download modern.bpf.c with error checking that verifies file existence and non-zero size
+ set(FILE_URL "https://raw.githubusercontent.com/wazuh/wazuh/${WAZUH_BRANCH}/src/syscheckd/src/ebpf/src/modern.bpf.c")
+ set(DEST_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/modern.bpf.c")
+-file(DOWNLOAD ${FILE_URL} ${DEST_PATH})
+-file(SIZE ${DEST_PATH} FILE_SIZE)
++# belegost: modern.bpf.c is pre-placed by the ebuild (from our own tag
++# tree); the existence check below validates it.  The upstream download
++# is dropped - the sandbox blocks it and the pin (v4.12.0) is the wrong
++# branch besides.
+ if(NOT EXISTS ${DEST_PATH} OR FILE_SIZE EQUAL 0)
+     message(FATAL_ERROR "Failed to download modern.bpf.c from ${FILE_URL}. Please check WAZUH_BRANCH.")
+ endif()
+ 
+-set(BPFOBJECT_BPFTOOL_EXE ${CMAKE_CURRENT_BINARY_DIR}/bpftool/bootstrap/bpftool)
+-set(BPFOBJECT_VMLINUX_H ${CMAKE_CURRENT_SOURCE_DIR}/vmlinux.h/include/${ARCH}/vmlinux.h)
+-set(LIBBPF_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/libbpf)
+-set(LIBBPF_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf.a)
+ find_package(BpfObject REQUIRED)
+ 
+-include_directories(
+-  ${CMAKE_CURRENT_SOURCE_DIR}/vmlinux.h/include/${ARCH}
+-)
+-
++# belegost: the generated vmlinux.h lands in ${CMAKE_CURRENT_BINARY_DIR}
++# (FindBpfObject GENERATED_VMLINUX_DIR); the include is provided by the
++# bpf_object machinery.
+ bpf_object(modern src/modern.bpf.c)
+-add_dependencies(modern_skel libbpf-build bpftool-build vmlinux.h)
+ 
+ add_library(modern SHARED src/modern.bpf.c)
+ target_link_libraries(modern modern_skel)

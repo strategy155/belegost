@@ -3,8 +3,10 @@
 
 EAPI=8
 
-# No eclass: plain emake build, OpenRC-only init (no systemd on this
-# workstation), acct packages consumed as atoms.
+# No eclass for the build (plain emake); linux-info for the eBPF
+# kernel prerequisite checks (the FOSDEM 2023 packaging recipe's
+# CONFIG_CHECK pattern, adapted for the agent's needs).
+inherit linux-info
 
 DESCRIPTION="Wazuh agent - host intrusion detection agent (OSSEC fork)"
 HOMEPAGE="https://wazuh.com https://github.com/wazuh/wazuh"
@@ -46,6 +48,7 @@ RDEPEND="
 	sys-apps/dbus
 	sys-libs/zlib
 	app-arch/rpm
+	dev-libs/libbpf:=
 	!!net-analyzer/ossec-hids
 "
 DEPEND="${RDEPEND}"
@@ -58,7 +61,13 @@ DEPEND="${RDEPEND}"
 # are the unbundled set from files/system-libs.patch (DT_NEEDED of
 # libwazuhext.so).  No gcc pin: the system toolchain builds this; a
 # gcc:14 slot pin is the documented fallback if GCC 16 breaks.
-BDEPEND="dev-build/cmake"
+# The eBPF toolchain (bpftool, clang with the BPF LLVM target, libbpf)
+# follows the FOSDEM 2023 packaging recipe and the current ::gentoo
+# idiom (llvm-core/clang, dev-util/bpftool; cf. sys-libs/libcap-ng's
+# bpf USE, sys-kernel/udev-hid-bpf).
+BDEPEND="dev-build/cmake
+	dev-util/bpftool
+	llvm-core/clang:=[llvm_targets_BPF]"
 
 S="${WORKDIR}/wazuh-${PV}"
 
@@ -90,17 +99,32 @@ src_prepare() {
 	cp "${DISTDIR}/wazuh-http-request-cd50797.tar.gz" \
 		"${S}/src/shared_modules/http-request.tar.gz" || die
 
-	# libbpf-bootstrap's CMakeLists downloads modern.bpf.c at configure
-	# time from a hardcoded v4.12.0 raw.githubusercontent URL - blocked
-	# by the sandbox, and pinned to the wrong branch besides.  The file
-	# ships in our tag tree; place it where the existence check looks
-	# and drop the download line (the patch set cannot reach this file:
-	# PATCHES apply before the vendored trees are relocated into ${S}).
+	# The eBPF surgery: applied after the relocation because PATCHES
+	# run before the vendored trees land in ${S}.  The patch removes
+	# the three ExternalProject git-clone fetches and the four set()
+	# overrides that pin their results - find_package(BpfObject) then
+	# auto-detects system bpftool/clang/libbpf and generates vmlinux.h
+	# from the running kernel (/sys/kernel/btf/vmlinux, the module's
+	# documented fallback and GURU flypaper's mechanism).
+	eapply "${FILESDIR}/ebpf-system-components.patch"
+
+	# modern.bpf.c pre-placement: the patch keeps the existence check
+	# that validates this copy (the file ships in our own tag tree;
+	# the upstream download is pinned to the wrong branch besides).
 	mkdir -p "${S}/src/external/libbpf-bootstrap/src" || die
 	cp "${S}/src/syscheckd/src/ebpf/src/modern.bpf.c" \
 		"${S}/src/external/libbpf-bootstrap/src/modern.bpf.c" || die
-	sed -i '/file(DOWNLOAD/d' \
-		"${S}/src/external/libbpf-bootstrap/CMakeLists.txt" || die
+}
+
+pkg_pretend() {
+	# The eBPF component needs kernel BTF (the vmlinux.h generation
+	# source); the libcap-ng model - die with a clear message rather
+	# than a cryptic bpftool failure mid-build.
+	if [[ ! -r /sys/kernel/btf/vmlinux ]]; then
+		eerror "Cannot read /sys/kernel/btf/vmlinux, which is required to generate vmlinux.h for the eBPF file monitoring."
+		eerror "Enable CONFIG_DEBUG_INFO_BTF in your kernel."
+		die "kernel BTF unavailable"
+	fi
 }
 
 src_compile() {
@@ -136,8 +160,13 @@ src_install() {
 	# the CMake subproject libraries, from their scattered build trees
 	doexe "${S}"/src/shared_modules/{dbsync,rsync}/build/bin/*.so \
 		"${S}"/src/data_provider/build/lib/*.so \
-		"${S}"/src/wazuh_modules/syscollector/build/bin/*.so \
-		"${S}"/src/shared_modules/syscollector/build/modern.bpf.o
+		"${S}"/src/wazuh_modules/syscollector/build/bin/*.so
+	# the eBPF file-monitoring artifacts (the rpm spec's %files and
+	# the AUR source-build's install list): fimebpf from the syscheckd
+	# build, modern.bpf.o from the libbpf-bootstrap build; libbpf.so
+	# comes from dev-libs/libbpf (system, RDEPEND)
+	doexe "${S}"/src/syscheckd/build/lib/libfimebpf.so \
+		"${S}"/src/external/libbpf-bootstrap/build/modern.bpf.o
 
 	# Default configs shipped as files/ artifacts (the tag archive has
 	# no src/etc/ for Linux; the installer synthesizes both).
