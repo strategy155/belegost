@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>mark.sobolev@cscs.ch</email>
+		<name>Mark Sobolev</name>
+	</maintainer>
+	<longdescription lang="en">
+		OpenShell is the safe, private runtime for autonomous AI agents:
+		each agent runs in a kernel-isolated sandbox (Landlock, seccomp,
+		network fencing) under a declarative policy; the gateway control
+		plane brokers credentials only to approved endpoints, and formally
+		verified policy changes prevent risky access grants. The package
+		installs the openshell CLI, the openshell-gateway local control
+		plane, the policy prover, and the sandbox and supervisor binaries,
+		plus an OpenRC user service for the gateway (start with
+		rc-service --user openshell-gateway).
+	</longdescription>
+	<upstream>
+		<bugs-to>https://github.com/NVIDIA/OpenShell/issues</bugs-to>
+		<doc>https://docs.nvidia.com/openshell/latest/</doc>
+		<remote-id type="github">NVIDIA/OpenShell</remote-id>
+	</upstream>
+</pkgmetadata>

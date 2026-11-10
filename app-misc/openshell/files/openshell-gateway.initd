@@ -1,0 +1,38 @@
+#!/sbin/openrc-run
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+supervisor=supervise-daemon
+description="OpenShell gateway daemon (local control plane for agent sandboxes)"
+
+# The gateway runs in the foreground when invoked bare; preflight and
+# TLS provisioning mirror upstream's systemd user unit. Variable
+# defaults live in /etc/user/conf.d/openshell-gateway.
+export OPENSHELL_LOCAL_TLS_DIR
+
+command=/usr/bin/openshell-gateway
+pidfile="$XDG_RUNTIME_DIR/openshell-gateway/${RC_SVCNAME}.pid"
+output_log="$XDG_RUNTIME_DIR/openshell-gateway/${RC_SVCNAME}.log"
+error_log="$XDG_RUNTIME_DIR/openshell-gateway/${RC_SVCNAME}.log"
+
+# Crash-restart policy (supervise-daemon); values come from conf.d.
+respawn_delay="$OPENSHELL_RESPAWN_DELAY"
+respawn_max="$OPENSHELL_RESPAWN_MAX"
+respawn_period="$OPENSHELL_RESPAWN_PERIOD"
+
+start_pre() {
+	checkpath -o "$USER" -d "$XDG_RUNTIME_DIR/openshell-gateway"
+
+	# Idempotent: writes only when material is missing; pre-populate
+	# $OPENSHELL_LOCAL_TLS_DIR with CA-signed material to use your own.
+	openshell-gateway config preflight || return
+	if [ -n "$OPENSHELL_LOCAL_TLS_DIR" ]; then
+		openshell-gateway generate-certs \
+			--output-dir "$OPENSHELL_LOCAL_TLS_DIR" \
+			--server-san host.openshell.internal || return
+	else
+		# Unset: the gateway provisions its built-in default location
+		openshell-gateway generate-certs \
+			--server-san host.openshell.internal || return
+	fi
+}

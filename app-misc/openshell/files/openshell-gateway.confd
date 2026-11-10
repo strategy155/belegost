@@ -1,0 +1,13 @@
+# /etc/user/conf.d/openshell-gateway — tunables for the OpenRC user
+# service; the init script consumes these verbatim. Restart with
+# rc-service --user restart openshell-gateway after edits.
+
+# TLS material (CA, server cert, JWT signing keys); home-relative per
+# upstream's systemd unit (%%h). mTLS client bundle at
+# ~/.config/openshell/gateways/openshell/mtls.
+OPENSHELL_LOCAL_TLS_DIR="$HOME/.local/state/openshell/tls"
+
+# Crash-restart policy (supervise-daemon).
+OPENSHELL_RESPAWN_DELAY=1
+OPENSHELL_RESPAWN_MAX=5
+OPENSHELL_RESPAWN_PERIOD=10
