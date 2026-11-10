@@ -50,16 +50,14 @@
  
  # Set the path to clang (update if necessary)
  set(CLANG_PATH "/usr/bin/clang")
-@@ -81,24 +42,20 @@
+@@ -81,27 +42,21 @@
  # Download modern.bpf.c with error checking that verifies file existence and non-zero size
  set(FILE_URL "https://raw.githubusercontent.com/wazuh/wazuh/${WAZUH_BRANCH}/src/syscheckd/src/ebpf/src/modern.bpf.c")
  set(DEST_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/modern.bpf.c")
 -file(DOWNLOAD ${FILE_URL} ${DEST_PATH})
 -file(SIZE ${DEST_PATH} FILE_SIZE)
-+# belegost: modern.bpf.c is pre-placed by the ebuild (from our own tag
-+# tree); the existence check below validates it.  The upstream download
-+# is dropped - the sandbox blocks it and the pin (v4.12.0) is the wrong
-+# branch besides.
++# belegost: pre-placed by the ebuild from our own tag tree; the
++# existence check below validates it.
  if(NOT EXISTS ${DEST_PATH} OR FILE_SIZE EQUAL 0)
      message(FATAL_ERROR "Failed to download modern.bpf.c from ${FILE_URL}. Please check WAZUH_BRANCH.")
  endif()
@@ -74,11 +72,16 @@
 -  ${CMAKE_CURRENT_SOURCE_DIR}/vmlinux.h/include/${ARCH}
 -)
 -
-+# belegost: the generated vmlinux.h lands in ${CMAKE_CURRENT_BINARY_DIR}
-+# (FindBpfObject GENERATED_VMLINUX_DIR); the include is provided by the
-+# bpf_object machinery.
  bpf_object(modern src/modern.bpf.c)
 -add_dependencies(modern_skel libbpf-build bpftool-build vmlinux.h)
  
- add_library(modern SHARED src/modern.bpf.c)
- target_link_libraries(modern modern_skel)
+-add_library(modern SHARED src/modern.bpf.c)
+-target_link_libraries(modern modern_skel)
++# belegost: the userspace modern library target is cut - it compiles
++# the BPF source for the host target (broken under clang 23: C23
++# keyword collisions in vmlinux.h, CO-RE builtins absent) and has
++# zero consumers (build-time, install list, and runtime dlopen all
++# verified empty; the runtime artifact is modern.bpf.o).
+ 
+ add_custom_target(change_libbpf_include ALL
+   COMMAND sed -i 's|<bpf/libbpf.h>|"wrapper_bpf.h"|' ${CMAKE_CURRENT_BINARY_DIR}/modern.skel.h
