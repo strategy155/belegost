@@ -18,13 +18,14 @@ SRC_URI="
 	https://github.com/strategy155/menegroth/releases/download/openshell-${PV}/openshell-${PV}-crates.tar.xz
 "
 
+S="${WORKDIR}/OpenShell-${PV}"
+
 # Apache-2.0 upstream; aggregate covers the vendored dep tree. Rare tokens
 # mapped per ::gentoo licenses/: bzip2-1.0.6 -> BZIP2, BSL-1.0 -> Boost-1.0,
 # LGPL-2.1-or-later -> LGPL-2.1+, WTFPL -> WTFPL-2, Zlib -> ZLIB; OR-choice
 # omissions: BSD-1-Clause and MIT-0 -> MIT.
 LICENSE="0BSD Apache-2.0 Boost-1.0 BSD BSD-2 BZIP2 CC0-1.0 CDLA-Permissive-2.0 ISC LGPL-2.1+ MIT MPL-2.0 Unicode-3.0 Unicode-DFS-2016 Unlicense WTFPL-2 ZLIB"
 SLOT="0"
-S="${WORKDIR}/OpenShell-${PV}"
 KEYWORDS="~amd64"
 
 # z3-sys links system Z3 via pkg-config; aws-lc-sys needs cmake; the build
