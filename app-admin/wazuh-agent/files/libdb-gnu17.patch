@@ -1,0 +1,18 @@
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -1155,7 +1155,14 @@
+ 	 ${MAKE} -C $(EXTERNAL_LIBDB) libdb.a
+ 
+ $(EXTERNAL_LIBDB)Makefile:
+-	cd ${EXTERNAL_LIBDB} && CPPFLAGS=-fPIC ../dist/configure --with-cryptography=no --disable-queue --disable-heap --disable-partition --disable-mutexsupport --disable-replication --disable-verify --disable-statistics ac_cv_func_pthread_yield=no
++# belegost: GCC 14+ defaults to the gnu23 dialect, where the K&R
++# unprototyped function-pointer slot in libdb's env_config.c
++# (int (*func)(); about 48 config_descs[] initializers) is a hard
++# error: () now means (void). The BDB 18.1 code is valid gnu17 -
++# the slot accepts any function pointer by design - and gnu17 is
++# Debian's own pin for the same code (debian/rules:11). Bake the
++# dialect into the CFLAGS configure detects.
++	cd ${EXTERNAL_LIBDB} && CPPFLAGS=-fPIC CFLAGS="$$CFLAGS -std=gnu17" ../dist/configure --with-cryptography=no --disable-queue --disable-heap --disable-partition --disable-mutexsupport --disable-replication --disable-verify --disable-statistics ac_cv_func_pthread_yield=no
+ endif
+ 
+ #### libarchive ######

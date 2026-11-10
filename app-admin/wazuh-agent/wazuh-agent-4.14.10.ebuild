@@ -75,6 +75,7 @@ PATCHES=(
 	"${FILESDIR}/system-libs.patch"
 	"${FILESDIR}/trim-fetch-surface.patch"
 	"${FILESDIR}/disable-pacman-inventory.patch"
+	"${FILESDIR}/libdb-gnu17.patch"
 )
 
 src_prepare() {
