@@ -10,7 +10,7 @@ CRATES=""
 
 inherit cargo shell-completion
 
-DESCRIPTION="Safe, private runtime for autonomous AI agents (kernel-sandboxed execution, formally verified policy, gateway-brokered credentials)"
+DESCRIPTION="Safe, private runtime for autonomous AI agents"
 HOMEPAGE="https://docs.nvidia.com/openshell/ https://github.com/NVIDIA/OpenShell"
 
 SRC_URI="
@@ -24,15 +24,14 @@ SRC_URI="
 # omissions: BSD-1-Clause and MIT-0 -> MIT.
 LICENSE="0BSD Apache-2.0 Boost-1.0 BSD BSD-2 BZIP2 CC0-1.0 CDLA-Permissive-2.0 ISC LGPL-2.1+ MIT MPL-2.0 Unicode-3.0 Unicode-DFS-2016 Unlicense WTFPL-2 ZLIB"
 SLOT="0"
-KEYWORDS="~amd64"
-
 S="${WORKDIR}/OpenShell-${PV}"
+KEYWORDS="~amd64"
 
 # z3-sys links system Z3 via pkg-config; aws-lc-sys needs cmake; the build
 # honours PROTOC since v0.1.5 (cf. app-misc/anki for the same pattern).
 RDEPEND="sci-mathematics/z3:="
 DEPEND="sci-mathematics/z3:="
-BDEPEND="dev-libs/protobuf[protoc(+)] dev-util/cmake virtual/pkgconfig"
+BDEPEND="dev-libs/protobuf[protoc(+)] dev-build/cmake virtual/pkgconfig"
 
 # rustc does not consume *FLAGS from make.conf (ebuild(5), bug 742905);
 # scoped to the five built binaries.

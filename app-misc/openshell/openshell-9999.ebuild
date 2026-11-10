@@ -8,7 +8,7 @@ RUST_MIN_VER="1.94.0"
 
 inherit cargo git-r3 shell-completion
 
-DESCRIPTION="Safe, private runtime for autonomous AI agents (kernel-sandboxed execution, formally verified policy, gateway-brokered credentials)"
+DESCRIPTION="Safe, private runtime for autonomous AI agents"
 HOMEPAGE="https://docs.nvidia.com/openshell/ https://github.com/NVIDIA/OpenShell"
 
 # Live: dependent-crate licenses resolve at build time via
@@ -22,7 +22,7 @@ PROPERTIES="live"
 # honours PROTOC since v0.1.5 (cf. app-misc/anki for the same pattern).
 RDEPEND="sci-mathematics/z3:="
 DEPEND="sci-mathematics/z3:="
-BDEPEND="dev-libs/protobuf[protoc(+)] dev-util/cmake virtual/pkgconfig"
+BDEPEND="dev-libs/protobuf[protoc(+)] dev-build/cmake virtual/pkgconfig"
 
 # rustc does not consume *FLAGS from make.conf (ebuild(5), bug 742905);
 # scoped to the five built binaries.
