@@ -16,11 +16,18 @@
  
  foreach(loop_var ${EXTERNAL_RES})
      check_and_download_dep(${loop_var} ${RESOURCES_URL})
-@@ -64,7 +69,8 @@
+@@ -63,8 +68,14 @@
+ 
  include_directories(src/)
  include_directories(include/)
- include_directories(${SRC_FOLDER}/external/curl/include/curl/)
+-include_directories(${SRC_FOLDER}/external/curl/include/curl/)
 -include_directories(${SRC_FOLDER}/external/nlohmann/)
++# belegost: the vendored precompiled curl is gone (net-misc/curl);
++# discover the system headers - the module's sources include
++# <curl.h> bare (ICURLHandler.hpp), which the vendored include
++# path used to satisfy.
++find_path(CURL_INCLUDE_DIR NAMES curl.h PATH_SUFFIXES curl)
++include_directories(${CURL_INCLUDE_DIR})
 +find_path(NLOHMANN_JSON_INCLUDE_DIR json.hpp PATH_SUFFIXES nlohmann)
 +include_directories(${NLOHMANN_JSON_INCLUDE_DIR})
  include_directories(BEFORE PRIVATE shared/)
