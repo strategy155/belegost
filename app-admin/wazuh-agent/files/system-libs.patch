@@ -128,6 +128,17 @@
  
  
  if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+--- a/src/data_provider/src/extended_sources/browser_extensions/CMakeLists.txt
++++ b/src/data_provider/src/extended_sources/browser_extensions/CMakeLists.txt
+@@ -37,7 +37,7 @@
+ 
+   add_library(browser_extensions STATIC ${SRC_FILES})
+   target_link_libraries(browser_extensions
+-    ${SRC_FOLDER}/external/openssl/libcrypto.a
++    crypto
+     dl
+   )
+ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 --- a/src/shared_modules/dbsync/CMakeLists.txt
 +++ b/src/shared_modules/dbsync/CMakeLists.txt
 @@ -40,9 +40,9 @@
@@ -160,7 +171,7 @@
 +# 2.22+ direct-dependency rule) - the public API is JSON-centric
 +# (dbsync.hpp feeds cJSON trees), so consumers of this target link
 +# the system cjson directly.
-+target_link_libraries(dbsync INTERFACE cjson)
++target_link_libraries(dbsync cjson)
  
  if(CMAKE_BUILD_TYPE STREQUAL "Release")
    if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
