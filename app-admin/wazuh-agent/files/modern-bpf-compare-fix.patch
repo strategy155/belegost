@@ -1,0 +1,20 @@
+--- a/src/syscheckd/src/ebpf/src/modern.bpf.c
++++ b/src/syscheckd/src/ebpf/src/modern.bpf.c
+@@ -184,7 +184,7 @@
+     buf_off = dir_path_len - 1;
+ 
+     // Check if the last character of dir_path is a null terminator
+-    if (&out_buf->data[buf_off - 1] != '/') {
++    if (out_buf->data[buf_off - 1] != '/') {
+         out_buf->data[buf_off] = '/';
+         buf_off++;
+     }
+@@ -832,7 +832,7 @@
+         return 0;
+ 
+     u8 *full_path = NULL;
+-    if (get_path_str_from_path(&full_path, &file->f_path, string_buf) < 0)
++    if (get_path_str_from_path(&full_path, (struct path *)&file->f_path, string_buf) < 0)
+         return 0;
+ 
+     __u64 inode = 0, dev = 0;

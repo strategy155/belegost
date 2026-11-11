@@ -76,6 +76,8 @@ PATCHES=(
 	"${FILESDIR}/trim-fetch-surface.patch"
 	"${FILESDIR}/disable-pacman-inventory.patch"
 	"${FILESDIR}/libdb-gnu17.patch"
+	"${FILESDIR}/lambda-shadow-rename.patch"
+	"${FILESDIR}/modern-bpf-compare-fix.patch"
 )
 
 src_prepare() {
@@ -107,6 +109,9 @@ src_prepare() {
 	# content lands after default runs), so apply post-relocation,
 	# the same ordering as the eBPF surgery below.
 	eapply "${FILESDIR}/http-request-system-libs.patch"
+	eapply "${FILESDIR}/curl-download-length-t.patch"
+	eapply "${FILESDIR}/fclose-deleter-wrapper.patch"
+	eapply "${FILESDIR}/bpf-missing-declarations.patch"
 
 	# The eBPF surgery: applied after the relocation because PATCHES
 	# run before the vendored trees land in ${S}.  The patch removes

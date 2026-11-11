@@ -1,0 +1,14 @@
+--- a/src/data_provider/src/extended_sources/groups/src/user_groups_linux.cpp
++++ b/src/data_provider/src/extended_sources/groups/src/user_groups_linux.cpp
+@@ -114,9 +114,9 @@
+ 
+         auto groupBuf = std::make_unique<char[]>(bufSize);
+ 
+-        const auto result = m_groupWrapper->getgrgid_r(gid, &grp, groupBuf.get(), bufSize, &grpResult);
++        const auto getgrgidResult = m_groupWrapper->getgrgid_r(gid, &grp, groupBuf.get(), bufSize, &grpResult);
+ 
+-        if (result == 0 && grpResult != nullptr)
++        if (getgrgidResult == 0 && grpResult != nullptr)
+         {
+             name = grpResult->gr_name;
+             gidToName.emplace(gid, name);

@@ -1,0 +1,11 @@
+--- a/src/external/libbpf-bootstrap/tools/cmake/FindBpfObject.cmake
++++ b/src/external/libbpf-bootstrap/tools/cmake/FindBpfObject.cmake
+@@ -166,7 +166,7 @@
+ 
+   # Build BPF object file
+   add_custom_command(OUTPUT ${BPF_O_FILE}
+-    COMMAND ${BPFOBJECT_CLANG_EXE} -g -O2 -target bpf -D__TARGET_ARCH_${ARCH}
++    COMMAND ${BPFOBJECT_CLANG_EXE} -g -O2 -target bpf -D__TARGET_ARCH_${ARCH} -Wno-missing-declarations
+             ${CLANG_SYSTEM_INCLUDES} -I${GENERATED_VMLINUX_DIR}
+             -isystem ${LIBBPF_INCLUDE_DIRS} -c ${BPF_C_FILE} -o ${BPF_O_FILE}
+     COMMAND_EXPAND_LISTS

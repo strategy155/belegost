@@ -1,0 +1,23 @@
+--- a/src/shared_modules/http-request/src/urlRequest.hpp
++++ b/src/shared_modules/http-request/src/urlRequest.hpp
+@@ -56,12 +56,19 @@
+  *
+  * @tparam T Type of the response body.
+  */
++// belegost: glibc declares fclose with __nonnull; the attribute is
++// dropped (and warned about) when the function-pointer type is used
++// as a template argument - GCC's own fix is blocked on ABI concerns
++// (Bugzilla 97222). A plain wrapper carries no attribute, silencing
++// the warning at the source (the libaom CloseFile pattern).
++static int fcloseWrapper(FILE* file) { return fclose(file); }
++
+ template<typename T, typename TFileSystem = FsWrapper>
+ class cURLRequest
+     : public Utils::Builder<T, std::shared_ptr<IRequestImplementator>>
+     , public TFileSystem
+ {
+-    using deleterFP = CustomDeleter<decltype(&fclose), fclose>;
++    using deleterFP = CustomDeleter<decltype(&fcloseWrapper), fcloseWrapper>;
+ 
+ private:
+     std::string m_unixSocketPath;
