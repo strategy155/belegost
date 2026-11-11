@@ -1,0 +1,28 @@
+--- a/src/shared_modules/http-request/CMakeLists.txt
++++ b/src/shared_modules/http-request/CMakeLists.txt
+@@ -48,8 +48,13 @@
+     endif()
+ endfunction(check_and_download_dep)
+ 
+-set(EXTERNAL_RES nlohmann googletest benchmark cpp-httplib)
+-set(PRECOMPILED_EXTERNAL_RES curl)
++# belegost: system components (dev-cpp/nlohmann_json via find_path,
++# net-misc/curl via -lcurl) replace every fetch; the test subprojects
++# (googletest, benchmark, cpp-httplib) never build - this module is
++# only ever a subdirectory of sysinfo's project, so the
++# urlrequest-name test block stays skipped.
++set(EXTERNAL_RES)
++set(PRECOMPILED_EXTERNAL_RES)
+ 
+ foreach(loop_var ${EXTERNAL_RES})
+     check_and_download_dep(${loop_var} ${RESOURCES_URL})
+@@ -64,7 +69,8 @@
+ include_directories(src/)
+ include_directories(include/)
+ include_directories(${SRC_FOLDER}/external/curl/include/curl/)
+-include_directories(${SRC_FOLDER}/external/nlohmann/)
++find_path(NLOHMANN_JSON_INCLUDE_DIR json.hpp PATH_SUFFIXES nlohmann)
++include_directories(${NLOHMANN_JSON_INCLUDE_DIR})
+ include_directories(BEFORE PRIVATE shared/)
+ 
+ link_directories(${SRC_FOLDER}/external/curl/lib/.libs/)

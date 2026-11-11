@@ -106,7 +106,7 @@ src_prepare() {
 	# vendored nlohmann include - PATCHES cannot reach it (the
 	# content lands after default runs), so apply post-relocation,
 	# the same ordering as the eBPF surgery below.
-	eapply "${FILESDIR}/http-request-nlohmann.patch"
+	eapply "${FILESDIR}/http-request-system-libs.patch"
 
 	# The eBPF surgery: applied after the relocation because PATCHES
 	# run before the vendored trees land in ${S}.  The patch removes

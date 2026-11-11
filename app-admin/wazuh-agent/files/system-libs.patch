@@ -151,6 +151,19 @@
  link_directories(${SRC_FOLDER}/external/cJSON/)
  
  file(GLOB DBSYNC_SRC
+@@ -83,6 +82,12 @@
+ endif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+ 
+ target_link_libraries(dbsync wazuhext)
++# belegost: libwazuhext.so NEEDs the system libcjson.so.1, but
++# consumers cannot resolve through a transitive DSO (the binutils
++# 2.22+ direct-dependency rule) - the public API is JSON-centric
++# (dbsync.hpp feeds cJSON trees), so consumers of this target link
++# the system cjson directly.
++target_link_libraries(dbsync INTERFACE cjson)
+ 
+ if(CMAKE_BUILD_TYPE STREQUAL "Release")
+   if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
 --- a/src/shared_modules/rsync/CMakeLists.txt
 +++ b/src/shared_modules/rsync/CMakeLists.txt
 @@ -41,9 +41,9 @@
