@@ -84,4 +84,4 @@
 +# verified empty; the runtime artifact is modern.bpf.o).
  
  add_custom_target(change_libbpf_include ALL
-   COMMAND sed -i 's|<bpf/libbpf.h>|"wrapper_bpf.h"|' ${CMAKE_CURRENT_BINARY_DIR}/modern.skel.h
+   COMMAND sed --in-place 's|<bpf/libbpf.h>|"wrapper_bpf.h"|' ${CMAKE_CURRENT_BINARY_DIR}/modern.skel.h

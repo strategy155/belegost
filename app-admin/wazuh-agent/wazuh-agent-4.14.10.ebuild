@@ -92,13 +92,21 @@ src_prepare() {
 		cp "${DISTDIR}/${dep}.tar.gz" "${S}/src/external/${dep}.tar.gz" || die
 	done
 
-	# http-request: renamed to the shared_modules/http-request/ the
-	# Makefile's --strip-components=1 rule (src/Makefile, the
-	# shared_modules/http-request.tar.gz target) would have produced.
-	mv "${WORKDIR}"/wazuh-wazuh-http-request-* \
-		"${S}/src/shared_modules/http-request" || die
+	# http-request: extracted into the git-submodule placeholder the
+	# tag tarball ships (src/shared_modules/http-request/ - .gitmodules
+	# mounts it there, and git archive renders a submodule as an empty
+	# directory) with the same --strip-components=1 rule the Makefile's
+	# own target uses (src/Makefile, shared_modules/http-request.tar.gz).
+	tar --extract --gzip --file="${DISTDIR}/wazuh-http-request-cd50797.tar.gz" \
+		--strip-components=1 --directory="${S}/src/shared_modules/http-request" || die
 	cp "${DISTDIR}/wazuh-http-request-cd50797.tar.gz" \
 		"${S}/src/shared_modules/http-request.tar.gz" || die
+
+	# The relocated module's own CMakeLists still points at the
+	# vendored nlohmann include - PATCHES cannot reach it (the
+	# content lands after default runs), so apply post-relocation,
+	# the same ordering as the eBPF surgery below.
+	eapply "${FILESDIR}/http-request-nlohmann.patch"
 
 	# The eBPF surgery: applied after the relocation because PATCHES
 	# run before the vendored trees land in ${S}.  The patch removes
@@ -112,7 +120,7 @@ src_prepare() {
 	# modern.bpf.c pre-placement: the patch keeps the existence check
 	# that validates this copy (the file ships in our own tag tree;
 	# the upstream download is pinned to the wrong branch besides).
-	mkdir -p "${S}/src/external/libbpf-bootstrap/src" || die
+	mkdir --parents "${S}/src/external/libbpf-bootstrap/src" || die
 	cp "${S}/src/syscheckd/src/ebpf/src/modern.bpf.c" \
 		"${S}/src/external/libbpf-bootstrap/src/modern.bpf.c" || die
 }
@@ -141,8 +149,8 @@ src_compile() {
 	mymakeargs+=( USE_AUDIT=$(usex audit yes no) )
 	use selinux && mymakeargs+=( USE_SELINUX=yes )
 
-	emake -C src EXTERNAL_SRC_ONLY=yes "${mymakeargs[@]}" deps
-	emake -C src "${mymakeargs[@]}"
+	emake --directory=src EXTERNAL_SRC_ONLY=yes "${mymakeargs[@]}" deps
+	emake --directory=src "${mymakeargs[@]}"
 }
 
 src_install() {
@@ -218,14 +226,14 @@ pkg_config() {
 	# Manager address: the substitution src/init/replace_manager_ip.sh
 	# performs for the RPM flow.
 	ebegin "Setting manager address to ${manager}"
-	sed -i "s|<address>.*</address>|<address>${manager}</address>|" "${config}"
+	sed --in-place "s|<address>.*</address>|<address>${manager}</address>|" "${config}"
 	eend $?
 
 	# Agent group: <groups> inside <enrollment> (the placement of
 	# register_configure_agent.sh's set_auto_enrollment_tag_value).
 	if [[ -n "${agent_group}" ]]; then
 		ebegin "Setting agent group to ${agent_group}"
-		sed -i "s|</enrollment>|<groups>${agent_group}</groups></enrollment>|" "${config}"
+		sed --in-place "s|</enrollment>|<groups>${agent_group}</groups></enrollment>|" "${config}"
 		eend $?
 	fi
 }

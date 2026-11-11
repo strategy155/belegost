@@ -37,7 +37,7 @@
  
 --- a/src/wazuh_modules/syscollector/CMakeLists.txt
 +++ b/src/wazuh_modules/syscollector/CMakeLists.txt
-@@ -46,12 +46,8 @@
+@@ -46,12 +46,10 @@
  endif(APPLE)
  
  include_directories(${SRC_FOLDER}/headers/)
@@ -45,13 +45,15 @@
 -include_directories(${SRC_FOLDER}/external/nlohmann/)
 -include_directories(${SRC_FOLDER}/external/cJSON/)
 +include_directories(/usr/include/cjson)
++find_path(NLOHMANN_JSON_INCLUDE_DIR json.hpp PATH_SUFFIXES nlohmann)
++include_directories(${NLOHMANN_JSON_INCLUDE_DIR})
  include_directories(${SRC_FOLDER}/external/procps/)
 -include_directories(${SRC_FOLDER}/external/bzip2/)
 -include_directories(${SRC_FOLDER}/external/openssl/include/)
  include_directories(${SRC_FOLDER}/shared_modules/utils)
  include_directories(${SRC_FOLDER}/shared_modules/dbsync/include/)
  include_directories(${SRC_FOLDER}/shared_modules/rsync/include/)
-@@ -64,12 +60,8 @@
+@@ -64,12 +62,8 @@
  link_directories(${SRC_FOLDER}/data_provider/build/lib)
  link_directories(${SRC_FOLDER})
  
@@ -66,7 +68,7 @@
  if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 --- a/src/data_provider/CMakeLists.txt
 +++ b/src/data_provider/CMakeLists.txt
-@@ -74,20 +74,15 @@
+@@ -74,20 +74,17 @@
  include_directories(${CMAKE_SOURCE_DIR}/src/extended_sources/services/include)
  include_directories(${CMAKE_SOURCE_DIR}/src/extended_sources/browser_extensions/include)
  include_directories(${SRC_FOLDER}/headers/)
@@ -74,6 +76,8 @@
 -include_directories(${SRC_FOLDER}/external/nlohmann/)
 -include_directories(${SRC_FOLDER}/external/cJSON/)
 +include_directories(/usr/include/cjson)
++find_path(NLOHMANN_JSON_INCLUDE_DIR json.hpp PATH_SUFFIXES nlohmann)
++include_directories(${NLOHMANN_JSON_INCLUDE_DIR})
  include_directories(${SRC_FOLDER}/external/procps/)
 -include_directories(${SRC_FOLDER}/external/bzip2/)
 -include_directories(${SRC_FOLDER}/external/openssl/include/)
@@ -89,7 +93,7 @@
  endif(NOT CMAKE_CHECK_CENTOS5)
  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
    # Avoid download externals from http-request submodule
-@@ -97,8 +92,8 @@
+@@ -97,8 +94,8 @@
    include_directories(${SRC_FOLDER}/shared_modules/http-request/shared/)
    include_directories(${CMAKE_SOURCE_DIR}/src/extended_sources/wrappers/unix/)
    include_directories(${CMAKE_SOURCE_DIR}/src/extended_sources/wrappers/unix/linux)
@@ -100,7 +104,7 @@
  endif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
  if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
    include_directories(${CMAKE_SOURCE_DIR}/src/extended_sources/wrappers/unix/)
-@@ -121,23 +116,18 @@
+@@ -121,23 +118,18 @@
  endif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
  
  link_directories(${SRC_FOLDER})
@@ -126,7 +130,7 @@
  if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 --- a/src/shared_modules/dbsync/CMakeLists.txt
 +++ b/src/shared_modules/dbsync/CMakeLists.txt
-@@ -40,9 +40,7 @@
+@@ -40,9 +40,9 @@
    set(CMAKE_MACOSX_RPATH 1)
  endif(APPLE)
  
@@ -134,10 +138,12 @@
 -include_directories(${SRC_FOLDER}/external/nlohmann/)
 -include_directories(${SRC_FOLDER}/external/cJSON/)
 +include_directories(/usr/include/cjson)
++find_path(NLOHMANN_JSON_INCLUDE_DIR json.hpp PATH_SUFFIXES nlohmann)
++include_directories(${NLOHMANN_JSON_INCLUDE_DIR})
  include_directories(${CMAKE_SOURCE_DIR}/include/)
  include_directories(${CMAKE_SOURCE_DIR}/src/)
  include_directories(${SHARED_MODULES}/utils/)
-@@ -56,7 +54,6 @@
+@@ -56,7 +56,6 @@
  endif(CMAKE_SYSTEM_NAME STREQUAL "HP-UX")
  
  link_directories(${SRC_FOLDER})
@@ -147,7 +153,7 @@
  file(GLOB DBSYNC_SRC
 --- a/src/shared_modules/rsync/CMakeLists.txt
 +++ b/src/shared_modules/rsync/CMakeLists.txt
-@@ -41,9 +41,7 @@
+@@ -41,9 +41,9 @@
    set(CMAKE_MACOSX_RPATH 1)
  endif(APPLE)
  
@@ -155,10 +161,12 @@
 -include_directories(${SRC_FOLDER}/external/nlohmann/)
 -include_directories(${SRC_FOLDER}/external/openssl/include/)
 +include_directories(/usr/include/cjson)
++find_path(NLOHMANN_JSON_INCLUDE_DIR json.hpp PATH_SUFFIXES nlohmann)
++include_directories(${NLOHMANN_JSON_INCLUDE_DIR})
  include_directories(${CMAKE_SOURCE_DIR}/include/)
  include_directories(${CMAKE_SOURCE_DIR}/src/)
  include_directories(${SHARED_MODULES}/dbsync/include/)
-@@ -59,8 +57,6 @@
+@@ -59,8 +59,6 @@
  
  link_directories(${SHARED_MODULES}/dbsync/build/lib/)
  link_directories(${SRC_FOLDER})
@@ -169,7 +177,7 @@
      "${CMAKE_SOURCE_DIR}/src/*.cpp")
 --- a/src/syscheckd/CMakeLists.txt
 +++ b/src/syscheckd/CMakeLists.txt
-@@ -15,12 +15,7 @@
+@@ -15,12 +15,9 @@
  get_filename_component(SRC_FOLDER ${CMAKE_SOURCE_DIR}/../ ABSOLUTE)
  
  include_directories(${SRC_FOLDER}/headers/)
@@ -180,6 +188,8 @@
 -include_directories(${SRC_FOLDER}/external/audit-userspace/lib)
 -include_directories(${SRC_FOLDER}/external/openssl/include/)
 +include_directories(/usr/include/cjson)
++find_path(NLOHMANN_JSON_INCLUDE_DIR json.hpp PATH_SUFFIXES nlohmann)
++include_directories(${NLOHMANN_JSON_INCLUDE_DIR})
  include_directories(${SRC_FOLDER}/shared_modules/common/)
  include_directories(${CMAKE_SOURCE_DIR}/include)
  include_directories(${CMAKE_SOURCE_DIR}/src/db/include/)
