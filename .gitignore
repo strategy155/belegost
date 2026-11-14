@@ -1,0 +1,6 @@
+# Generated locally by Portage, egencache and pkgcheck. The gentoo.git and
+# guru development repositories don't track it either; their mirrors do.
+/metadata/md5-cache/
+
+# Claude Code per-machine settings.
+/.claude/settings.local.json
