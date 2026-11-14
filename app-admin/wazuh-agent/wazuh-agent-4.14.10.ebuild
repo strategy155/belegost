@@ -26,7 +26,7 @@ SRC_URI="
 
 # GPL-2 for the wazuh code; the vendored set adds AGPL-3.0 (BDB 18.1)
 # and LGPL-2.1{,+} (libbpf-bootstrap, procps) - see metadata.xml.
-LICENSE="AGPL-3.0 GPL-2 LGPL-2.1 LGPL-2.1+"
+LICENSE="AGPL-3 GPL-2 LGPL-2.1 LGPL-2.1+"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE="audit selinux"
