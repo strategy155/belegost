@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+
+<pkgmetadata>
+  <longdescription>
+    yc is the official command-line interface for Yandex Cloud. It manages
+    Yandex Compute, IAM, Managed Kubernetes, Managed Databases, Object
+    Storage, Serverless, VPC and related services via the Yandex Cloud
+    public APIs. Distributed upstream as a prebuilt, statically linked Go
+    binary; source is not publicly released.
+  </longdescription>
+  <upstream>
+    <doc>https://yandex.cloud/en/docs/cli/</doc>
+  </upstream>
+</pkgmetadata>
