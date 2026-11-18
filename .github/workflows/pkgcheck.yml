@@ -1,0 +1,19 @@
+name: pkgcheck
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  pkgcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      # Fails on the same result set as Gentoo's own CI (--exit GentooCI);
+      # repo-specific settings come from metadata/pkgcheck.conf.
+      - name: Run pkgcheck
+        uses: pkgcore/pkgcheck-action@v1
