@@ -4,16 +4,18 @@ A personal Gentoo overlay.
 
 ## Using it
 
+belegost builds on [::guru](https://wiki.gentoo.org/wiki/Project:GURU) as well
+as ::gentoo (`masters = gentoo guru`), so enable both:
+
 ```sh
+eselect repository enable guru
 eselect repository add belegost git https://github.com/strategy155/belegost.git
+emaint sync --repo guru
 emaint sync --repo belegost
 ```
 
-From then on, a plain `emerge --sync` updates it together with your other
+From then on, a plain `emerge --sync` updates them together with your other
 repositories.
-
-`dev-python/mcp-atlassian` also needs [::guru](https://wiki.gentoo.org/wiki/Project:GURU)
-enabled for its dependencies.
 
 ## Distfiles
 
