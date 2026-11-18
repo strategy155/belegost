@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+
+<pkgmetadata>
+  <longdescription>
+    durationpy converts between datetime.timedelta objects and
+    Go-style duration strings (e.g. "1h30m"). Includes PEP 561
+    type stubs.
+  </longdescription>
+  <upstream>
+    <remote-id type="pypi">durationpy</remote-id>
+    <remote-id type="github">icholy/durationpy</remote-id>
+  </upstream>
+</pkgmetadata>
