@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+
+<pkgmetadata>
+  <longdescription>
+    kubeconform is a Kubernetes manifest validator that schema-checks YAML
+    or JSON manifests against the OpenAPI-derived JSON Schemas for a target
+    Kubernetes version. Faster successor to the now-abandoned kubeval, it
+    handles CustomResourceDefinitions via configurable schema locations and
+    is the de-facto modern answer for the "validate manifests in pre-commit
+    or CI" use case. Pure Go, single static binary, Apache-2.0.
+  </longdescription>
+  <upstream>
+    <bugs-to>https://github.com/yannh/kubeconform/issues</bugs-to>
+    <doc>https://github.com/yannh/kubeconform#readme</doc>
+    <remote-id type="github">yannh/kubeconform</remote-id>
+  </upstream>
+</pkgmetadata>
