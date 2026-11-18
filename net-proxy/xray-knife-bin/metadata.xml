@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+
+<pkgmetadata>
+  <longdescription>
+    xray-knife is a command-line and web UI for operating Xray and
+    sing-box proxies: aggregating subscription links, measuring
+    throughput/latency, scanning Cloudflare edges for usable IPs, and
+    running an auto-rotating proxy that fails over between multiple
+    upstream configs. This package ships the statically-linked
+    Linux/amd64 or Linux/arm64 binary released by upstream on GitHub.
+    Source is available (MIT, Go) but currently fails to build under
+    Go 1.26+ due to two unrelated upstream bugs in xtls/xray-core's
+    transitive gvisor dependency; switch to a source ebuild once those
+    are resolved upstream.
+  </longdescription>
+  <upstream>
+    <bugs-to>https://github.com/lilendian0x00/xray-knife/issues</bugs-to>
+    <doc>https://github.com/lilendian0x00/xray-knife#readme</doc>
+    <remote-id type="github">lilendian0x00/xray-knife</remote-id>
+  </upstream>
+</pkgmetadata>
