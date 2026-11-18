@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+
+<pkgmetadata>
+  <longdescription>
+    sqlx-cli is the command-line tool for SQLx, providing database
+    migration management and compile-time query verification for
+    PostgreSQL. This package is built with PostgreSQL support only.
+  </longdescription>
+  <upstream>
+    <bugs-to>https://github.com/launchbadge/sqlx/issues</bugs-to>
+    <remote-id type="github">launchbadge/sqlx</remote-id>
+  </upstream>
+</pkgmetadata>
