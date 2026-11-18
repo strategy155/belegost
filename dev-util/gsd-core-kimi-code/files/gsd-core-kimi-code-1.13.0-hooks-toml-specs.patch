@@ -1,0 +1,95 @@
+--- a/gsd-core/bin/lib/runtime-hooks-surface.cjs
++++ b/gsd-core/bin/lib/runtime-hooks-surface.cjs
+@@ -2469,11 +2469,12 @@
+  * Event -> hook mapping mirrors applySettingsJsonHooks' settings.json wiring
+  * 1:1 by GSD hook script (update check, session-state, phase-boundary,
+  * graphify, context monitor, prompt/read/workflow/worktree guards, commit
+- * validation). Kimi's 13 lifecycle events include exact-name equivalents for
+- * every Claude-dialect event GSD currently wires (SessionStart, PreToolUse,
+- * PostToolUse, Stop, PreCompact, SubagentStart, SubagentStop) — see
+- * moonshotai.github.io/kimi-cli/en/customization/hooks.html.
++ * validation). The two Kimi products are selected by hookOpts.runtime:
+  *
++ * kimi (Python kimi-cli, ~/.kimi): its 13 lifecycle events include
++ * exact-name equivalents for every Claude-dialect event GSD currently wires
++ * (SessionStart, PreToolUse, PostToolUse, Stop, PreCompact, SubagentStart,
++ * SubagentStop) — see moonshotai.github.io/kimi-cli/en/customization/hooks.html.
+  * Matcher translation (best-effort — Kimi's tool-name vocabulary is
+  * confirmed distinct from Claude's by the upstream hooks doc's own examples):
+  *   Bash -> Shell, Write -> WriteFile, Edit/MultiEdit -> StrReplaceFile.
+@@ -2483,31 +2484,61 @@
+  * dropped rather than guessed — gsd-context-monitor's PostToolUse entry runs
+  * unmatched (all tools) instead, which only widens when it fires, it never
+  * narrows incorrectly.
++ *
++ * kimi-code (Node CLI, ~/.kimi-code): Claude-style tool names instead —
++ * its PreToolUse/PostToolUse payloads carry tool_name in Claude's vocabulary
++ * (Bash/Write/Edit/Read), so matchers use those names. And only
++ * UserPromptSubmit hook stdout reaches the model — SessionStart and
++ * PostToolUse output is discarded — so gsd-session-state.sh and the
++ * conversational gsd-context-monitor.js entry wire to UserPromptSubmit,
++ * matcher-less by design: on UserPromptSubmit the matcher filters the
++ * prompt text, and these hooks must fire on every prompt. The
++ * state-tracking context-monitor entries on Stop/PreCompact/SubagentStart/
++ * SubagentStop stay on their own events.
+  */
+ function buildKimiHooksTomlBlock(targetDir, opts) {
+     const { hookOpts } = opts;
++    // install.js already threads the runtime through writeKimiHooksToml's
++    // opts ({ hookOpts: { portableHooks, runtime } }), so both Kimi products
++    // reach this builder with hookOpts.runtime set — no signature change.
++    // Anything else (direct/test callers) falls back to the kimi (Python
++    // kimi-cli) spellings, preserving pre-split behavior byte-for-byte.
++    const isKimiCode = hookOpts?.runtime === 'kimi-code';
++    // Tool-name vocabulary per product (see the doc note above): kimi keeps
++    // the WriteFile/StrReplaceFile/Shell/ReadFile spellings, kimi-code uses
++    // the Claude-style names its PreToolUse/PostToolUse payloads carry.
++    const toolNames = isKimiCode
++        ? { writeEdit: 'Write|Edit', write: 'Write', shellWriteEdit: 'Bash|Write|Edit', shell: 'Bash', read: 'Read', secretRead: 'Read|Grep|Bash' }
++        : { writeEdit: 'WriteFile|StrReplaceFile', write: 'WriteFile', shellWriteEdit: 'Shell|WriteFile|StrReplaceFile', shell: 'Shell', read: 'ReadFile', secretRead: 'ReadFile|Grep|Shell' };
++    // kimi-code surfaces hook stdout to the model only on UserPromptSubmit
++    // (SessionStart/PostToolUse output is discarded), so the two hooks whose
++    // value IS their output move there; kimi keeps them on SessionStart and
++    // PostToolUse.
++    const sessionStateEvent = isKimiCode ? 'UserPromptSubmit' : 'SessionStart';
++    const contextMonitorEvent = isKimiCode ? 'UserPromptSubmit' : 'PostToolUse';
+     const cmd = (hookName) => {
+         if (!node_fs_1.default.existsSync(node_path_1.default.join(targetDir, 'hooks', hookName)))
+             return null;
+         return buildHookCommand(targetDir, hookName, hookOpts);
+     };
+     const specs = [
+-        // SessionStart — unmatched (session-level; no tool_name to filter on).
++        // Session-level — unmatched (no tool_name to filter on). kimi-code
++        // moves session-state to UserPromptSubmit (see the doc note above).
+         { event: 'SessionStart', command: cmd('gsd-check-update.js') },
+-        { event: 'SessionStart', command: cmd('gsd-session-state.sh') },
++        { event: sessionStateEvent, command: cmd('gsd-session-state.sh') },
+         // PreToolUse
+-        { event: 'PreToolUse', command: cmd('gsd-prompt-guard.js'), matcher: 'WriteFile|StrReplaceFile', timeout: 5 },
+-        { event: 'PreToolUse', command: cmd('gsd-read-guard.js'), matcher: 'WriteFile|StrReplaceFile', timeout: 5 },
+-        { event: 'PreToolUse', command: cmd('gsd-worktree-path-guard.js'), matcher: 'WriteFile|StrReplaceFile', timeout: 5 },
+-        { event: 'PreToolUse', command: cmd('gsd-write-guard.js'), matcher: 'WriteFile', timeout: 5 },
+-        { event: 'PreToolUse', command: cmd('gsd-secret-read-guard.js'), matcher: 'ReadFile|Grep|Shell', timeout: 5 },
+-        { event: 'PreToolUse', command: cmd('gsd-workflow-guard.js'), matcher: 'Shell|WriteFile|StrReplaceFile', timeout: 5 },
+-        { event: 'PreToolUse', command: cmd('gsd-validate-commit.sh'), matcher: 'Shell', timeout: 5 },
+-        // PostToolUse
+-        { event: 'PostToolUse', command: cmd('gsd-context-monitor.js'), timeout: 10 },
+-        { event: 'PostToolUse', command: cmd('gsd-phase-boundary.sh'), matcher: 'WriteFile|StrReplaceFile', timeout: 5 },
+-        { event: 'PostToolUse', command: cmd('gsd-read-injection-scanner.js'), matcher: 'ReadFile', timeout: 5 },
+-        { event: 'PostToolUse', command: cmd('gsd-graphify-update.sh'), matcher: 'Shell', timeout: 5 },
++        { event: 'PreToolUse', command: cmd('gsd-prompt-guard.js'), matcher: toolNames.writeEdit, timeout: 5 },
++        { event: 'PreToolUse', command: cmd('gsd-read-guard.js'), matcher: toolNames.writeEdit, timeout: 5 },
++        { event: 'PreToolUse', command: cmd('gsd-worktree-path-guard.js'), matcher: toolNames.writeEdit, timeout: 5 },
++        { event: 'PreToolUse', command: cmd('gsd-write-guard.js'), matcher: toolNames.write, timeout: 5 },
++        { event: 'PreToolUse', command: cmd('gsd-secret-read-guard.js'), matcher: toolNames.secretRead, timeout: 5 },
++        { event: 'PreToolUse', command: cmd('gsd-workflow-guard.js'), matcher: toolNames.shellWriteEdit, timeout: 5 },
++        { event: 'PreToolUse', command: cmd('gsd-validate-commit.sh'), matcher: toolNames.shell, timeout: 5 },
++        // PostToolUse (context monitor moves to UserPromptSubmit on kimi-code).
++        { event: contextMonitorEvent, command: cmd('gsd-context-monitor.js'), timeout: 10 },
++        { event: 'PostToolUse', command: cmd('gsd-phase-boundary.sh'), matcher: toolNames.writeEdit, timeout: 5 },
++        { event: 'PostToolUse', command: cmd('gsd-read-injection-scanner.js'), matcher: toolNames.read, timeout: 5 },
++        { event: 'PostToolUse', command: cmd('gsd-graphify-update.sh'), matcher: toolNames.shell, timeout: 5 },
+         // Extended lifecycle events — context-headroom tracking (unmatched).
+         { event: 'Stop', command: cmd('gsd-context-monitor.js'), timeout: 10 },
+         { event: 'PreCompact', command: cmd('gsd-context-monitor.js'), timeout: 10 },

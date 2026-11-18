@@ -1,0 +1,122 @@
+--- a/hooks/gsd-validate-commit.sh
++++ b/hooks/gsd-validate-commit.sh
+@@ -556,10 +556,15 @@
+       # #3811). Tests assert on the stable code string and the typed array;
+       # the reason is the human-readable copy, never grepped by tests.
+       echo "{\"decision\": \"block\", \"code\": \"CONVENTIONAL_COMMITS_VIOLATION\", \"valid_types\": $COMMIT_TYPES_JSON, \"reason\": \"Commit message must follow Conventional Commits: <type>(<scope>): <subject>. Valid types: $COMMIT_TYPE_LIST. Subject must be <=72 chars, lowercase, imperative mood, no trailing period.\"}"
++      # Kimi Code's hook bus does not parse the Claude-shaped JSON above; on
++      # exit 2 it reads stderr verbatim back to the model as the block reason
++      # (same dual-channel pattern as hooks/gsd-write-guard.js emitBlock).
++      echo "Commit message must follow Conventional Commits: <type>(<scope>): <subject>. Valid types: $COMMIT_TYPE_LIST. Subject must be <=72 chars, lowercase, imperative mood, no trailing period." >&2
+       exit 2
+     fi
+     if [ ${#SUBJECT} -gt 72 ]; then
+       echo '{"decision": "block", "code": "COMMIT_SUBJECT_TOO_LONG", "reason": "Commit subject must be 72 characters or less."}'
++      echo 'Commit subject must be 72 characters or less.' >&2
+       exit 2
+     fi
+   fi
+--- a/hooks/dist/gsd-validate-commit.sh
++++ b/hooks/dist/gsd-validate-commit.sh
+@@ -556,10 +556,15 @@
+       # #3811). Tests assert on the stable code string and the typed array;
+       # the reason is the human-readable copy, never grepped by tests.
+       echo "{\"decision\": \"block\", \"code\": \"CONVENTIONAL_COMMITS_VIOLATION\", \"valid_types\": $COMMIT_TYPES_JSON, \"reason\": \"Commit message must follow Conventional Commits: <type>(<scope>): <subject>. Valid types: $COMMIT_TYPE_LIST. Subject must be <=72 chars, lowercase, imperative mood, no trailing period.\"}"
++      # Kimi Code's hook bus does not parse the Claude-shaped JSON above; on
++      # exit 2 it reads stderr verbatim back to the model as the block reason
++      # (same dual-channel pattern as hooks/gsd-write-guard.js emitBlock).
++      echo "Commit message must follow Conventional Commits: <type>(<scope>): <subject>. Valid types: $COMMIT_TYPE_LIST. Subject must be <=72 chars, lowercase, imperative mood, no trailing period." >&2
+       exit 2
+     fi
+     if [ ${#SUBJECT} -gt 72 ]; then
+       echo '{"decision": "block", "code": "COMMIT_SUBJECT_TOO_LONG", "reason": "Commit subject must be 72 characters or less."}'
++      echo 'Commit subject must be 72 characters or less.' >&2
+       exit 2
+     fi
+   fi
+--- a/hooks/gsd-session-state.sh
++++ b/hooks/gsd-session-state.sh
+@@ -54,6 +54,11 @@
+       state_present: statePresent === "true",
+       config_mode: configMode,
+     },
++    // The Kimi Code exit-0 stdout parser ignores additionalContext entirely and
++    // reads only top-level `message` (appended to the prompt as <hook_result>
++    // when this hook is wired to UserPromptSubmit); its looseObject schema
++    // tolerates the Claude envelope above, so both shapes ride one payload.
++    message: additionalContext,
+   }));
+ ' "$STATE_PRESENT" "$STATE_HEAD" "$CONFIG_MODE"
+ 
+--- a/hooks/dist/gsd-session-state.sh
++++ b/hooks/dist/gsd-session-state.sh
+@@ -54,6 +54,11 @@
+       state_present: statePresent === "true",
+       config_mode: configMode,
+     },
++    // The Kimi Code exit-0 stdout parser ignores additionalContext entirely and
++    // reads only top-level `message` (appended to the prompt as <hook_result>
++    // when this hook is wired to UserPromptSubmit); its looseObject schema
++    // tolerates the Claude envelope above, so both shapes ride one payload.
++    message: additionalContext,
+   }));
+ ' "$STATE_PRESENT" "$STATE_HEAD" "$CONFIG_MODE"
+ 
+--- a/hooks/gsd-context-monitor.js
++++ b/hooks/gsd-context-monitor.js
+@@ -473,7 +473,10 @@
+     // Gemini-dialect runtime (GEMINI_API_KEY set) still means AfterTool, so its
+     // advisory output is unchanged. A missing name on any other host is silent.
+     const geminiFallback = eventName === "" && !!process.env.GEMINI_API_KEY;
+-    const injectionSupported = eventName === "PostToolUse" || eventName === "AfterTool" || geminiFallback;
++    // UserPromptSubmit is injection-capable on both Claude and Kimi Code — and
++    // on Kimi it is the only event whose stdout reaches the model at all
++    // (PostToolUse output is discarded there), so it joins the allowlist.
++    const injectionSupported = eventName === "PostToolUse" || eventName === "AfterTool" || eventName === "UserPromptSubmit" || geminiFallback;
+ 
+     if (injectionSupported) {
+       const output = {
+@@ -483,6 +486,14 @@
+           severity: currentLevel
+         }
+       };
++      // Kimi Code's exit-0 stdout parser reads only top-level `message` (its
++      // looseObject schema tolerates but ignores additionalContext) and
++      // appends it to the user's prompt as <hook_result>. Gate the dual
++      // emission on UserPromptSubmit so PostToolUse/AfterTool output stays
++      // byte-identical for Claude/Gemini.
++      if (eventName === "UserPromptSubmit") {
++        output.message = message;
++      }
+       process.stdout.write(JSON.stringify(output));
+     }
+   } catch (e) {
+--- a/hooks/dist/gsd-context-monitor.js
++++ b/hooks/dist/gsd-context-monitor.js
+@@ -473,7 +473,10 @@
+     // Gemini-dialect runtime (GEMINI_API_KEY set) still means AfterTool, so its
+     // advisory output is unchanged. A missing name on any other host is silent.
+     const geminiFallback = eventName === "" && !!process.env.GEMINI_API_KEY;
+-    const injectionSupported = eventName === "PostToolUse" || eventName === "AfterTool" || geminiFallback;
++    // UserPromptSubmit is injection-capable on both Claude and Kimi Code — and
++    // on Kimi it is the only event whose stdout reaches the model at all
++    // (PostToolUse output is discarded there), so it joins the allowlist.
++    const injectionSupported = eventName === "PostToolUse" || eventName === "AfterTool" || eventName === "UserPromptSubmit" || geminiFallback;
+ 
+     if (injectionSupported) {
+       const output = {
+@@ -483,6 +486,14 @@
+           severity: currentLevel
+         }
+       };
++      // Kimi Code's exit-0 stdout parser reads only top-level `message` (its
++      // looseObject schema tolerates but ignores additionalContext) and
++      // appends it to the user's prompt as <hook_result>. Gate the dual
++      // emission on UserPromptSubmit so PostToolUse/AfterTool output stays
++      // byte-identical for Claude/Gemini.
++      if (eventName === "UserPromptSubmit") {
++        output.message = message;
++      }
+       process.stdout.write(JSON.stringify(output));
+     }
+   } catch (e) {

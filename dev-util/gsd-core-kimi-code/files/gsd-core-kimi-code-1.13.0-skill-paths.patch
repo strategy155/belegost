@@ -1,0 +1,146 @@
+--- a/gsd-core/bin/lib/runtime-artifact-conversion.cjs
++++ b/gsd-core/bin/lib/runtime-artifact-conversion.cjs
+@@ -2676,6 +2676,67 @@
+     return applyAgentBrandingRewrites(content, 'hermes');
+ }
+ /**
++ * Kimi Code agent converter — tool-vocabulary gap (follow-up to the #2454
++ * kimi-code capability descriptor).
++ *
++ * Kimi Code's built-in web tools are WebSearch and FetchURL; it has no
++ * WebFetch tool, so a Claude-shaped `tools:` allowlist entry of WebFetch
++ * silently matches nothing and the agent loses its URL-fetch grant. Rename
++ * the token to FetchURL inside YAML frontmatter `tools:`/`allowed-tools:`
++ * lines only — both the inline comma-list form (`tools: A, B`) and the
++ * block-list form (`tools:` + `- A` items), mirroring
++ * convertClaudeAgentToZcodeAgent's frontmatter scan. Body prose mentions of
++ * WebFetch are left verbatim: they are guidance text, not grants, and the
++ * model resolves tool names against the runtime's real tool list.
++ *
++ * Byte-identical for an agent with no WebFetch grant and for an agent with
++ * no (or unterminated) frontmatter. Resolved by name from capabilities/
++ * kimi-code/capability.json's agents-kind `converter` field via
++ * convertedAgentsKind's conversionExports[converterName] dispatch.
++ */
++function convertClaudeAgentToKimiCodeAgent(content) {
++    if (!content.includes('WebFetch'))
++        return content;
++    const lines = content.split('\n');
++    if (lines[0] !== '---')
++        return content;
++    let fmEnd = -1;
++    for (let i = 1; i < lines.length; i++) {
++        if (lines[i] === '---') {
++            fmEnd = i;
++            break;
++        }
++    }
++    if (fmEnd === -1)
++        return content; // unterminated frontmatter — leave verbatim
++    let changed = false;
++    let inToolsBlock = false;
++    for (let i = 1; i < fmEnd; i++) {
++        const line = lines[i];
++        if (/^(?:tools|allowed-tools):[ \t]*\S/.test(line)) {
++            inToolsBlock = false;
++            if (line.includes('WebFetch')) {
++                lines[i] = line.replace(/\bWebFetch\b/g, 'FetchURL');
++                changed = true;
++            }
++            continue;
++        }
++        if (/^(?:tools|allowed-tools):[ \t]*$/.test(line)) {
++            inToolsBlock = true;
++            continue;
++        }
++        if (inToolsBlock && /^[ \t]*-[ \t]*\S/.test(line)) {
++            if (line.includes('WebFetch')) {
++                lines[i] = line.replace(/\bWebFetch\b/g, 'FetchURL');
++                changed = true;
++            }
++            continue;
++        }
++        inToolsBlock = false;
++    }
++    return changed ? lines.join('\n') : content;
++}
++/**
+  * Convert Claude Code agent markdown to Codex agent format.
+  * Applies base markdown conversions, then adds a <codex_agent_role> header
+  * and cleans up frontmatter (removes tools/color fields).
+@@ -3114,7 +3175,14 @@
+             content = processAttribution(content, attribution);
+             break;
+         }
++        // kimi-code shares kimi's dot-home rewrite set: for a global install
++        // pathPrefix is '$HOME/.kimi-code/' and dirName is '.kimi-code' (from
++        // the descriptor's localConfigDir). Without this case the skills-kind
++        // post-pass (rewriteStagedSkillBodies) fell into `default:` and every
++        // @~/.claude/gsd-core/… include shipped verbatim in installed SKILL.md
++        // bodies (126 refs across 60 of 71 skills).
+         case 'kimi':
++        case 'kimi-code':
+             content = content.replace(/~\/\.claude\//g, pathPrefix);
+             content = content.replace(/\$HOME\/\.claude\//g, pathPrefix);
+             content = content.replace(/\.\/\.claude\//g, `./${dirName}/`);
+@@ -3653,6 +3721,10 @@
+     // conversionExports[converterName] dispatch, resolved from
+     // capabilities/zcode/capability.json's agents kind.
+     convertClaudeAgentToZcodeAgent,
++    // kimi-code: no WebFetch tool (its web tools are WebSearch + FetchURL) —
++    // registered by name for the same conversionExports[converterName]
++    // dispatch, resolved from capabilities/kimi-code/capability.json.
++    convertClaudeAgentToKimiCodeAgent,
+     // #1511 ADR-1508 Phase 2: rewrite engine deep seam
+     // Low-level walkers (pathPrefix + attribution pre-resolved by caller):
+     applyRuntimeContentRewritesInPlace,
+--- a/gsd-core/bin/lib/capability-validator.cjs
++++ b/gsd-core/bin/lib/capability-validator.cjs
+@@ -879,6 +879,9 @@
+   // and the kilo/opencode agent converters (shared with those runtimes'
+   // commands-kind entries, options-bag signature `(content, {isAgent, modelOverride})`).
+   'convertClaudeAgentToHermesAgent',
++  // kimi-code (#2454 follow-up): the WebFetch grant is renamed to FetchURL —
++  // Kimi Code's built-in web tools are WebSearch + FetchURL, no WebFetch.
++  'convertClaudeAgentToKimiCodeAgent',
+   'convertClaudeToKiloFrontmatter',
+   'convertClaudeToOpencodeFrontmatter',
+ ]);
+--- a/gsd-core/bin/lib/capability-registry.cjs
++++ b/gsd-core/bin/lib/capability-registry.cjs
+@@ -2327,7 +2327,7 @@
+             "prefix": "gsd-",
+             "nesting": "flat",
+             "recursive": false,
+-            "converter": null
++            "converter": "convertClaudeAgentToKimiCodeAgent"
+           }
+         ],
+         "local": [
+@@ -2337,7 +2337,7 @@
+             "prefix": "gsd-",
+             "nesting": "flat",
+             "recursive": false,
+-            "converter": null
++            "converter": "convertClaudeAgentToKimiCodeAgent"
+           }
+         ]
+       },
+@@ -7058,7 +7058,7 @@
+             "prefix": "gsd-",
+             "nesting": "flat",
+             "recursive": false,
+-            "converter": null
++            "converter": "convertClaudeAgentToKimiCodeAgent"
+           }
+         ],
+         "local": [
+@@ -7068,7 +7068,7 @@
+             "prefix": "gsd-",
+             "nesting": "flat",
+             "recursive": false,
+-            "converter": null
++            "converter": "convertClaudeAgentToKimiCodeAgent"
+           }
+         ]
+       },

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    GSD Core (Git. Ship. Done.) is a meta-prompting, context-engineering and
+    spec-driven development system for AI coding agents. This package builds
+    the same upstream tarball as dev-util/gsd-core but applies FILESDIR
+    patches that make the Kimi Code (Moonshot's Node CLI) deployment actually
+    work: correct hook event/matcher wiring for ~/.kimi-code/config.toml,
+    hook-payload normalization gated on Kimi Code's client_type stamp, block
+    reasons mirrored to stderr, skill/agent path conversion for
+    $HOME/.kimi-code, and a statusline that understands Kimi Code's
+    camelCase snapshot. It installs side-by-side with the vanilla package,
+    exposing only the gsd-core-kimi-code deployer.
+  </longdescription>
+  <upstream>
+    <bugs-to>https://github.com/open-gsd/gsd-core/issues</bugs-to>
+    <remote-id type="github">open-gsd/gsd-core</remote-id>
+  </upstream>
+</pkgmetadata>

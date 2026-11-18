@@ -1,0 +1,756 @@
+--- a/hooks/gsd-prompt-guard.js
++++ b/hooks/gsd-prompt-guard.js
+@@ -44,7 +44,13 @@
+ // ('constructor', '__proto__', 'toString') to truthy functions/objects, so the
+ // !mapped fall-through never fires for them; Map.get returns undefined (same
+ // shape as canonicalizeRuntimeName in src/runtime-name-policy.cts).
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash']]);
++// Identity entries (Write/Edit/Read/Bash → themselves) serve Kimi Code,
++// Moonshot's Node CLI — distinct from the Python kimi-cli the rename entries
++// target. Its hook payloads already carry Claude-style tool names but keep
++// kimi-cli's field shapes (`path`, not `file_path`; `tool_output`, not
++// `tool_response`), so they need the field mapping below without a rename.
++// They engage only on client_type: 'kimi_code_cli' — see normalizeKimiPayload.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash'], ['Write', 'Write'], ['Edit', 'Edit'], ['Read', 'Read'], ['Bash', 'Bash']]);
+ function normalizeKimiPayload(data) {
+   // #2595 (review nit): `JSON.parse('null')` is null, and null/primitive
+   // payloads reached the `data.tool_name` read below and threw — falsifying
+@@ -55,8 +61,18 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // An identity hit (mapped === name) is ambiguous: Claude Code and Kimi Code
++  // share this tool vocabulary. Only Kimi Code stamps client_type:
++  // 'kimi_code_cli' into every hook payload (Claude Code's hook-input schema
++  // has no client_type field), and only Kimi Code shapes the fields
++  // kimi-cli-style — a native Claude Code payload must return BEFORE the
++  // mapping below runs, where `file_path` is what the runtime executes on and
++  // the #2547-authoritative `path` overwrite would let a model-supplied
++  // `path` shadow it (the mirror image of the kimi-cli bypass #2547 closed).
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   if (data.tool_response === undefined && data.tool_output !== undefined) {
+     data.tool_response = data.tool_output;
+@@ -86,7 +102,11 @@
+     }
+     const edits = Array.isArray(input.edit) ? input.edit
+       : (input.edit && typeof input.edit === 'object') ? [input.edit] : [];
+-    if (edits.length) {
++    // mapped !== name: only kimi-cli-vocabulary payloads carry `edit`; on a
++    // Kimi Code identity payload old_string/new_string are ALREADY the
++    // authoritative fields, so a spurious model-supplied `edit` must not be
++    // reconstructed over them (the same shadowing class as #2547, mirrored).
++    if (edits.length && mapped !== name) {
+       // #2547: `e?.old`, not `e.old` — `??` guards the value, not the
+       // dereference, so a NULLISH entry (`edit: [null]`) threw a TypeError
+       // here. normalizeKimiPayload runs before any tool dispatch, so that throw
+--- a/hooks/gsd-read-guard.js
++++ b/hooks/gsd-read-guard.js
+@@ -45,7 +45,13 @@
+ // ('constructor', '__proto__', 'toString') to truthy functions/objects, so the
+ // !mapped fall-through never fires for them; Map.get returns undefined (same
+ // shape as canonicalizeRuntimeName in src/runtime-name-policy.cts).
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash']]);
++// Identity entries (Write/Edit/Read/Bash → themselves) serve Kimi Code,
++// Moonshot's Node CLI — distinct from the Python kimi-cli the rename entries
++// target. Its hook payloads already carry Claude-style tool names but keep
++// kimi-cli's field shapes (`path`, not `file_path`; `tool_output`, not
++// `tool_response`), so they need the field mapping below without a rename.
++// They engage only on client_type: 'kimi_code_cli' — see normalizeKimiPayload.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash'], ['Write', 'Write'], ['Edit', 'Edit'], ['Read', 'Read'], ['Bash', 'Bash']]);
+ function normalizeKimiPayload(data) {
+   // #2595 (review nit): `JSON.parse('null')` is null, and null/primitive
+   // payloads reached the `data.tool_name` read below and threw — falsifying
+@@ -56,8 +62,18 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // An identity hit (mapped === name) is ambiguous: Claude Code and Kimi Code
++  // share this tool vocabulary. Only Kimi Code stamps client_type:
++  // 'kimi_code_cli' into every hook payload (Claude Code's hook-input schema
++  // has no client_type field), and only Kimi Code shapes the fields
++  // kimi-cli-style — a native Claude Code payload must return BEFORE the
++  // mapping below runs, where `file_path` is what the runtime executes on and
++  // the #2547-authoritative `path` overwrite would let a model-supplied
++  // `path` shadow it (the mirror image of the kimi-cli bypass #2547 closed).
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   if (data.tool_response === undefined && data.tool_output !== undefined) {
+     data.tool_response = data.tool_output;
+@@ -87,7 +103,11 @@
+     }
+     const edits = Array.isArray(input.edit) ? input.edit
+       : (input.edit && typeof input.edit === 'object') ? [input.edit] : [];
+-    if (edits.length) {
++    // mapped !== name: only kimi-cli-vocabulary payloads carry `edit`; on a
++    // Kimi Code identity payload old_string/new_string are ALREADY the
++    // authoritative fields, so a spurious model-supplied `edit` must not be
++    // reconstructed over them (the same shadowing class as #2547, mirrored).
++    if (edits.length && mapped !== name) {
+       // #2547: `e?.old`, not `e.old` — `??` guards the value, not the
+       // dereference, so a NULLISH entry (`edit: [null]`) threw a TypeError
+       // here. normalizeKimiPayload runs before any tool dispatch, so that throw
+@@ -140,6 +160,12 @@
+     // Claude Code natively enforces read-before-edit — skip the advisory (#1984, #2344, #2520).
+     //
+     // Detection signals, in priority order:
++    //   0. `data.client_type` — absence. Kimi Code (Moonshot's Node CLI)
++    //      stamps client_type: 'kimi_code_cli' into EVERY hook payload and
++    //      also always sends a non-empty session_id, so signal 1 alone
++    //      misclassifies every Kimi Code call as Claude Code and leaves this
++    //      guard permanently dormant there. Claude Code's hook-input schema
++    //      has no client_type field.
+     //   1. `data.session_id` on the hook's stdin payload — part of Claude
+     //      Code's documented PreToolUse hook-input schema, always present.
+     //      Reliable across Claude Code versions because it's schema, not env.
+@@ -152,11 +178,12 @@
+     //      not hook subprocesses, which is why checking them alone is
+     //      insufficient (regression of #2344 fixed here as #2520).
+     const isClaudeCode =
+-      (typeof data.session_id === 'string' && data.session_id.length > 0) ||
+-      process.env.CLAUDE_CODE_ENTRYPOINT ||
+-      process.env.CLAUDE_CODE_SSE_PORT ||
+-      process.env.CLAUDE_SESSION_ID ||
+-      process.env.CLAUDECODE;
++      data.client_type !== 'kimi_code_cli' &&
++      ((typeof data.session_id === 'string' && data.session_id.length > 0) ||
++        process.env.CLAUDE_CODE_ENTRYPOINT ||
++        process.env.CLAUDE_CODE_SSE_PORT ||
++        process.env.CLAUDE_SESSION_ID ||
++        process.env.CLAUDECODE);
+     if (isClaudeCode) {
+       allow(undefined);
+     }
+--- a/hooks/gsd-worktree-path-guard.js
++++ b/hooks/gsd-worktree-path-guard.js
+@@ -64,7 +64,13 @@
+ // ('constructor', '__proto__', 'toString') to truthy functions/objects, so the
+ // !mapped fall-through never fires for them; Map.get returns undefined (same
+ // shape as canonicalizeRuntimeName in src/runtime-name-policy.cts).
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash']]);
++// Identity entries (Write/Edit/Read/Bash → themselves) serve Kimi Code,
++// Moonshot's Node CLI — distinct from the Python kimi-cli the rename entries
++// target. Its hook payloads already carry Claude-style tool names but keep
++// kimi-cli's field shapes (`path`, not `file_path`; `tool_output`, not
++// `tool_response`), so they need the field mapping below without a rename.
++// They engage only on client_type: 'kimi_code_cli' — see normalizeKimiPayload.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash'], ['Write', 'Write'], ['Edit', 'Edit'], ['Read', 'Read'], ['Bash', 'Bash']]);
+ function normalizeKimiPayload(data) {
+   // #2595 (review nit): `JSON.parse('null')` is null, and null/primitive
+   // payloads reached the `data.tool_name` read below and threw — falsifying
+@@ -75,8 +81,18 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // An identity hit (mapped === name) is ambiguous: Claude Code and Kimi Code
++  // share this tool vocabulary. Only Kimi Code stamps client_type:
++  // 'kimi_code_cli' into every hook payload (Claude Code's hook-input schema
++  // has no client_type field), and only Kimi Code shapes the fields
++  // kimi-cli-style — a native Claude Code payload must return BEFORE the
++  // mapping below runs, where `file_path` is what the runtime executes on and
++  // the #2547-authoritative `path` overwrite would let a model-supplied
++  // `path` shadow it (the mirror image of the kimi-cli bypass #2547 closed).
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   if (data.tool_response === undefined && data.tool_output !== undefined) {
+     data.tool_response = data.tool_output;
+@@ -106,7 +122,11 @@
+     }
+     const edits = Array.isArray(input.edit) ? input.edit
+       : (input.edit && typeof input.edit === 'object') ? [input.edit] : [];
+-    if (edits.length) {
++    // mapped !== name: only kimi-cli-vocabulary payloads carry `edit`; on a
++    // Kimi Code identity payload old_string/new_string are ALREADY the
++    // authoritative fields, so a spurious model-supplied `edit` must not be
++    // reconstructed over them (the same shadowing class as #2547, mirrored).
++    if (edits.length && mapped !== name) {
+       // #2547: `e?.old`, not `e.old` — `??` guards the value, not the
+       // dereference, so a NULLISH entry (`edit: [null]`) threw a TypeError
+       // here. normalizeKimiPayload runs before any tool dispatch, so that throw
+--- a/hooks/gsd-write-guard.js
++++ b/hooks/gsd-write-guard.js
+@@ -190,17 +190,23 @@
+ // on Kimi. The tool_input field names differ as well (kimi-cli
+ // src/kimi_cli/tools/file/write.py): WriteFile takes `path`/`content`, and
+ // kimi-cli's hooks/events.py forwards tool_input verbatim, so both layers need
+-// mapping. Only WriteFile is mapped: this guard exits 0 for any tool but
+-// Write, so an Edit-class mapping here would be dead code. Accepts bare and
+-// module-qualified ('kimi_cli.tools.file:WriteFile') names; unknown names fall
+-// through untouched. Inlined per guard (not hooks/lib/): hook scripts are
++// mapping. WriteFile — and, for Kimi Code (Moonshot's Node CLI) payloads
++// stamped client_type: 'kimi_code_cli', the identity entry Write — is mapped:
++// this guard exits 0 for any tool but Write, so an Edit-class mapping here
++// would be dead code. Accepts bare and module-qualified
++// ('kimi_cli.tools.file:WriteFile') names; unknown names fall through
++// untouched. Inlined per guard (not hooks/lib/): hook scripts are
+ // staged as standalone files, and a sibling require is a staging dependency
+ // that can fail silently.
+ // A Map, not an object literal: bare bracket lookup resolves prototype keys
+ // ('constructor', '__proto__', 'toString') to truthy functions/objects, so the
+ // !mapped fall-through never fires for them; Map.get returns undefined (same
+ // shape as canonicalizeRuntimeName in src/runtime-name-policy.cts).
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write']]);
++// Identity entry for Kimi Code (Moonshot's Node CLI — distinct from the
++// Python kimi-cli above): its hook payloads already say 'Write' but keep
++// kimi-cli's field shapes (`path`, not `file_path`), so they need the field
++// mapping below. Engages only on client_type: 'kimi_code_cli' — see the gate.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['Write', 'Write']]);
+ function normalizeKimiPayload(data) {
+   // #2595: total over everything JSON can express — JSON.parse('null') is
+   // null, and reading .tool_name off a primitive would throw into the outer
+@@ -209,8 +215,14 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // Identity-hit gate (see the comment above the map): only Kimi Code stamps
++  // client_type: 'kimi_code_cli' into its hook payloads; a native Claude Code
++  // Write (whose file_path is what the runtime executes on) must pass through
++  // BEFORE the #2547-authoritative `path` overwrite below can shadow it.
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   const input = data.tool_input;
+   if (input && typeof input === 'object') {
+--- a/hooks/gsd-workflow-guard.js
++++ b/hooks/gsd-workflow-guard.js
+@@ -201,7 +201,13 @@
+ // ('constructor', '__proto__', 'toString') to truthy functions/objects, so the
+ // !mapped fall-through never fires for them; Map.get returns undefined (same
+ // shape as canonicalizeRuntimeName in src/runtime-name-policy.cts).
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash']]);
++// Identity entries (Write/Edit/Read/Bash → themselves) serve Kimi Code,
++// Moonshot's Node CLI — distinct from the Python kimi-cli the rename entries
++// target. Its hook payloads already carry Claude-style tool names but keep
++// kimi-cli's field shapes (`path`, not `file_path`; `tool_output`, not
++// `tool_response`), so they need the field mapping below without a rename.
++// They engage only on client_type: 'kimi_code_cli' — see normalizeKimiPayload.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash'], ['Write', 'Write'], ['Edit', 'Edit'], ['Read', 'Read'], ['Bash', 'Bash']]);
+ function normalizeKimiPayload(data) {
+   // #2595 (review nit): `JSON.parse('null')` is null, and null/primitive
+   // payloads reached the `data.tool_name` read below and threw — falsifying
+@@ -212,8 +218,18 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // An identity hit (mapped === name) is ambiguous: Claude Code and Kimi Code
++  // share this tool vocabulary. Only Kimi Code stamps client_type:
++  // 'kimi_code_cli' into every hook payload (Claude Code's hook-input schema
++  // has no client_type field), and only Kimi Code shapes the fields
++  // kimi-cli-style — a native Claude Code payload must return BEFORE the
++  // mapping below runs, where `file_path` is what the runtime executes on and
++  // the #2547-authoritative `path` overwrite would let a model-supplied
++  // `path` shadow it (the mirror image of the kimi-cli bypass #2547 closed).
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   if (data.tool_response === undefined && data.tool_output !== undefined) {
+     data.tool_response = data.tool_output;
+@@ -243,7 +259,11 @@
+     }
+     const edits = Array.isArray(input.edit) ? input.edit
+       : (input.edit && typeof input.edit === 'object') ? [input.edit] : [];
+-    if (edits.length) {
++    // mapped !== name: only kimi-cli-vocabulary payloads carry `edit`; on a
++    // Kimi Code identity payload old_string/new_string are ALREADY the
++    // authoritative fields, so a spurious model-supplied `edit` must not be
++    // reconstructed over them (the same shadowing class as #2547, mirrored).
++    if (edits.length && mapped !== name) {
+       // #2547: `e?.old`, not `e.old` — `??` guards the value, not the
+       // dereference, so a NULLISH entry (`edit: [null]`) threw a TypeError
+       // here. normalizeKimiPayload runs before any tool dispatch, so that throw
+--- a/hooks/gsd-read-injection-scanner.js
++++ b/hooks/gsd-read-injection-scanner.js
+@@ -142,7 +142,13 @@
+ // ('constructor', '__proto__', 'toString') to truthy functions/objects, so the
+ // !mapped fall-through never fires for them; Map.get returns undefined (same
+ // shape as canonicalizeRuntimeName in src/runtime-name-policy.cts).
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash']]);
++// Identity entries (Write/Edit/Read/Bash → themselves) serve Kimi Code,
++// Moonshot's Node CLI — distinct from the Python kimi-cli the rename entries
++// target. Its hook payloads already carry Claude-style tool names but keep
++// kimi-cli's field shapes (`path`, not `file_path`; `tool_output`, not
++// `tool_response`), so they need the field mapping below without a rename.
++// They engage only on client_type: 'kimi_code_cli' — see normalizeKimiPayload.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash'], ['Write', 'Write'], ['Edit', 'Edit'], ['Read', 'Read'], ['Bash', 'Bash']]);
+ function normalizeKimiPayload(data) {
+   // #2595 (review nit): `JSON.parse('null')` is null, and null/primitive
+   // payloads reached the `data.tool_name` read below and threw — falsifying
+@@ -153,8 +159,18 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // An identity hit (mapped === name) is ambiguous: Claude Code and Kimi Code
++  // share this tool vocabulary. Only Kimi Code stamps client_type:
++  // 'kimi_code_cli' into every hook payload (Claude Code's hook-input schema
++  // has no client_type field), and only Kimi Code shapes the fields
++  // kimi-cli-style — a native Claude Code payload must return BEFORE the
++  // mapping below runs, where `file_path` is what the runtime executes on and
++  // the #2547-authoritative `path` overwrite would let a model-supplied
++  // `path` shadow it (the mirror image of the kimi-cli bypass #2547 closed).
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   if (data.tool_response === undefined && data.tool_output !== undefined) {
+     data.tool_response = data.tool_output;
+@@ -184,7 +200,11 @@
+     }
+     const edits = Array.isArray(input.edit) ? input.edit
+       : (input.edit && typeof input.edit === 'object') ? [input.edit] : [];
+-    if (edits.length) {
++    // mapped !== name: only kimi-cli-vocabulary payloads carry `edit`; on a
++    // Kimi Code identity payload old_string/new_string are ALREADY the
++    // authoritative fields, so a spurious model-supplied `edit` must not be
++    // reconstructed over them (the same shadowing class as #2547, mirrored).
++    if (edits.length && mapped !== name) {
+       // #2547: `e?.old`, not `e.old` — `??` guards the value, not the
+       // dereference, so a NULLISH entry (`edit: [null]`) threw a TypeError
+       // here. normalizeKimiPayload runs before any tool dispatch, so that throw
+--- a/hooks/gsd-secret-read-guard.js
++++ b/hooks/gsd-secret-read-guard.js
+@@ -944,7 +944,13 @@
+ // tests/kimi-guard-normalization-parity.test.cjs — do not edit locally).
+ // Grep keeps its name on Kimi and is not in the map; bareToolName() above
+ // strips the module prefix for it.
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash']]);
++// Identity entries (Write/Edit/Read/Bash → themselves) serve Kimi Code,
++// Moonshot's Node CLI — distinct from the Python kimi-cli the rename entries
++// target. Its hook payloads already carry Claude-style tool names but keep
++// kimi-cli's field shapes (`path`, not `file_path`; `tool_output`, not
++// `tool_response`), so they need the field mapping below without a rename.
++// They engage only on client_type: 'kimi_code_cli' — see normalizeKimiPayload.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash'], ['Write', 'Write'], ['Edit', 'Edit'], ['Read', 'Read'], ['Bash', 'Bash']]);
+ function normalizeKimiPayload(data) {
+   // #2595 (review nit): `JSON.parse('null')` is null, and null/primitive
+   // payloads reached the `data.tool_name` read below and threw — falsifying
+@@ -955,8 +961,18 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // An identity hit (mapped === name) is ambiguous: Claude Code and Kimi Code
++  // share this tool vocabulary. Only Kimi Code stamps client_type:
++  // 'kimi_code_cli' into every hook payload (Claude Code's hook-input schema
++  // has no client_type field), and only Kimi Code shapes the fields
++  // kimi-cli-style — a native Claude Code payload must return BEFORE the
++  // mapping below runs, where `file_path` is what the runtime executes on and
++  // the #2547-authoritative `path` overwrite would let a model-supplied
++  // `path` shadow it (the mirror image of the kimi-cli bypass #2547 closed).
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   if (data.tool_response === undefined && data.tool_output !== undefined) {
+     data.tool_response = data.tool_output;
+@@ -986,7 +1002,11 @@
+     }
+     const edits = Array.isArray(input.edit) ? input.edit
+       : (input.edit && typeof input.edit === 'object') ? [input.edit] : [];
+-    if (edits.length) {
++    // mapped !== name: only kimi-cli-vocabulary payloads carry `edit`; on a
++    // Kimi Code identity payload old_string/new_string are ALREADY the
++    // authoritative fields, so a spurious model-supplied `edit` must not be
++    // reconstructed over them (the same shadowing class as #2547, mirrored).
++    if (edits.length && mapped !== name) {
+       // #2547: `e?.old`, not `e.old` — `??` guards the value, not the
+       // dereference, so a NULLISH entry (`edit: [null]`) threw a TypeError
+       // here. normalizeKimiPayload runs before any tool dispatch, so that throw
+--- a/hooks/dist/gsd-prompt-guard.js
++++ b/hooks/dist/gsd-prompt-guard.js
+@@ -44,7 +44,13 @@
+ // ('constructor', '__proto__', 'toString') to truthy functions/objects, so the
+ // !mapped fall-through never fires for them; Map.get returns undefined (same
+ // shape as canonicalizeRuntimeName in src/runtime-name-policy.cts).
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash']]);
++// Identity entries (Write/Edit/Read/Bash → themselves) serve Kimi Code,
++// Moonshot's Node CLI — distinct from the Python kimi-cli the rename entries
++// target. Its hook payloads already carry Claude-style tool names but keep
++// kimi-cli's field shapes (`path`, not `file_path`; `tool_output`, not
++// `tool_response`), so they need the field mapping below without a rename.
++// They engage only on client_type: 'kimi_code_cli' — see normalizeKimiPayload.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash'], ['Write', 'Write'], ['Edit', 'Edit'], ['Read', 'Read'], ['Bash', 'Bash']]);
+ function normalizeKimiPayload(data) {
+   // #2595 (review nit): `JSON.parse('null')` is null, and null/primitive
+   // payloads reached the `data.tool_name` read below and threw — falsifying
+@@ -55,8 +61,18 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // An identity hit (mapped === name) is ambiguous: Claude Code and Kimi Code
++  // share this tool vocabulary. Only Kimi Code stamps client_type:
++  // 'kimi_code_cli' into every hook payload (Claude Code's hook-input schema
++  // has no client_type field), and only Kimi Code shapes the fields
++  // kimi-cli-style — a native Claude Code payload must return BEFORE the
++  // mapping below runs, where `file_path` is what the runtime executes on and
++  // the #2547-authoritative `path` overwrite would let a model-supplied
++  // `path` shadow it (the mirror image of the kimi-cli bypass #2547 closed).
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   if (data.tool_response === undefined && data.tool_output !== undefined) {
+     data.tool_response = data.tool_output;
+@@ -86,7 +102,11 @@
+     }
+     const edits = Array.isArray(input.edit) ? input.edit
+       : (input.edit && typeof input.edit === 'object') ? [input.edit] : [];
+-    if (edits.length) {
++    // mapped !== name: only kimi-cli-vocabulary payloads carry `edit`; on a
++    // Kimi Code identity payload old_string/new_string are ALREADY the
++    // authoritative fields, so a spurious model-supplied `edit` must not be
++    // reconstructed over them (the same shadowing class as #2547, mirrored).
++    if (edits.length && mapped !== name) {
+       // #2547: `e?.old`, not `e.old` — `??` guards the value, not the
+       // dereference, so a NULLISH entry (`edit: [null]`) threw a TypeError
+       // here. normalizeKimiPayload runs before any tool dispatch, so that throw
+--- a/hooks/dist/gsd-read-guard.js
++++ b/hooks/dist/gsd-read-guard.js
+@@ -45,7 +45,13 @@
+ // ('constructor', '__proto__', 'toString') to truthy functions/objects, so the
+ // !mapped fall-through never fires for them; Map.get returns undefined (same
+ // shape as canonicalizeRuntimeName in src/runtime-name-policy.cts).
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash']]);
++// Identity entries (Write/Edit/Read/Bash → themselves) serve Kimi Code,
++// Moonshot's Node CLI — distinct from the Python kimi-cli the rename entries
++// target. Its hook payloads already carry Claude-style tool names but keep
++// kimi-cli's field shapes (`path`, not `file_path`; `tool_output`, not
++// `tool_response`), so they need the field mapping below without a rename.
++// They engage only on client_type: 'kimi_code_cli' — see normalizeKimiPayload.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash'], ['Write', 'Write'], ['Edit', 'Edit'], ['Read', 'Read'], ['Bash', 'Bash']]);
+ function normalizeKimiPayload(data) {
+   // #2595 (review nit): `JSON.parse('null')` is null, and null/primitive
+   // payloads reached the `data.tool_name` read below and threw — falsifying
+@@ -56,8 +62,18 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // An identity hit (mapped === name) is ambiguous: Claude Code and Kimi Code
++  // share this tool vocabulary. Only Kimi Code stamps client_type:
++  // 'kimi_code_cli' into every hook payload (Claude Code's hook-input schema
++  // has no client_type field), and only Kimi Code shapes the fields
++  // kimi-cli-style — a native Claude Code payload must return BEFORE the
++  // mapping below runs, where `file_path` is what the runtime executes on and
++  // the #2547-authoritative `path` overwrite would let a model-supplied
++  // `path` shadow it (the mirror image of the kimi-cli bypass #2547 closed).
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   if (data.tool_response === undefined && data.tool_output !== undefined) {
+     data.tool_response = data.tool_output;
+@@ -87,7 +103,11 @@
+     }
+     const edits = Array.isArray(input.edit) ? input.edit
+       : (input.edit && typeof input.edit === 'object') ? [input.edit] : [];
+-    if (edits.length) {
++    // mapped !== name: only kimi-cli-vocabulary payloads carry `edit`; on a
++    // Kimi Code identity payload old_string/new_string are ALREADY the
++    // authoritative fields, so a spurious model-supplied `edit` must not be
++    // reconstructed over them (the same shadowing class as #2547, mirrored).
++    if (edits.length && mapped !== name) {
+       // #2547: `e?.old`, not `e.old` — `??` guards the value, not the
+       // dereference, so a NULLISH entry (`edit: [null]`) threw a TypeError
+       // here. normalizeKimiPayload runs before any tool dispatch, so that throw
+@@ -140,6 +160,12 @@
+     // Claude Code natively enforces read-before-edit — skip the advisory (#1984, #2344, #2520).
+     //
+     // Detection signals, in priority order:
++    //   0. `data.client_type` — absence. Kimi Code (Moonshot's Node CLI)
++    //      stamps client_type: 'kimi_code_cli' into EVERY hook payload and
++    //      also always sends a non-empty session_id, so signal 1 alone
++    //      misclassifies every Kimi Code call as Claude Code and leaves this
++    //      guard permanently dormant there. Claude Code's hook-input schema
++    //      has no client_type field.
+     //   1. `data.session_id` on the hook's stdin payload — part of Claude
+     //      Code's documented PreToolUse hook-input schema, always present.
+     //      Reliable across Claude Code versions because it's schema, not env.
+@@ -152,11 +178,12 @@
+     //      not hook subprocesses, which is why checking them alone is
+     //      insufficient (regression of #2344 fixed here as #2520).
+     const isClaudeCode =
+-      (typeof data.session_id === 'string' && data.session_id.length > 0) ||
+-      process.env.CLAUDE_CODE_ENTRYPOINT ||
+-      process.env.CLAUDE_CODE_SSE_PORT ||
+-      process.env.CLAUDE_SESSION_ID ||
+-      process.env.CLAUDECODE;
++      data.client_type !== 'kimi_code_cli' &&
++      ((typeof data.session_id === 'string' && data.session_id.length > 0) ||
++        process.env.CLAUDE_CODE_ENTRYPOINT ||
++        process.env.CLAUDE_CODE_SSE_PORT ||
++        process.env.CLAUDE_SESSION_ID ||
++        process.env.CLAUDECODE);
+     if (isClaudeCode) {
+       allow(undefined);
+     }
+--- a/hooks/dist/gsd-worktree-path-guard.js
++++ b/hooks/dist/gsd-worktree-path-guard.js
+@@ -64,7 +64,13 @@
+ // ('constructor', '__proto__', 'toString') to truthy functions/objects, so the
+ // !mapped fall-through never fires for them; Map.get returns undefined (same
+ // shape as canonicalizeRuntimeName in src/runtime-name-policy.cts).
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash']]);
++// Identity entries (Write/Edit/Read/Bash → themselves) serve Kimi Code,
++// Moonshot's Node CLI — distinct from the Python kimi-cli the rename entries
++// target. Its hook payloads already carry Claude-style tool names but keep
++// kimi-cli's field shapes (`path`, not `file_path`; `tool_output`, not
++// `tool_response`), so they need the field mapping below without a rename.
++// They engage only on client_type: 'kimi_code_cli' — see normalizeKimiPayload.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash'], ['Write', 'Write'], ['Edit', 'Edit'], ['Read', 'Read'], ['Bash', 'Bash']]);
+ function normalizeKimiPayload(data) {
+   // #2595 (review nit): `JSON.parse('null')` is null, and null/primitive
+   // payloads reached the `data.tool_name` read below and threw — falsifying
+@@ -75,8 +81,18 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // An identity hit (mapped === name) is ambiguous: Claude Code and Kimi Code
++  // share this tool vocabulary. Only Kimi Code stamps client_type:
++  // 'kimi_code_cli' into every hook payload (Claude Code's hook-input schema
++  // has no client_type field), and only Kimi Code shapes the fields
++  // kimi-cli-style — a native Claude Code payload must return BEFORE the
++  // mapping below runs, where `file_path` is what the runtime executes on and
++  // the #2547-authoritative `path` overwrite would let a model-supplied
++  // `path` shadow it (the mirror image of the kimi-cli bypass #2547 closed).
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   if (data.tool_response === undefined && data.tool_output !== undefined) {
+     data.tool_response = data.tool_output;
+@@ -106,7 +122,11 @@
+     }
+     const edits = Array.isArray(input.edit) ? input.edit
+       : (input.edit && typeof input.edit === 'object') ? [input.edit] : [];
+-    if (edits.length) {
++    // mapped !== name: only kimi-cli-vocabulary payloads carry `edit`; on a
++    // Kimi Code identity payload old_string/new_string are ALREADY the
++    // authoritative fields, so a spurious model-supplied `edit` must not be
++    // reconstructed over them (the same shadowing class as #2547, mirrored).
++    if (edits.length && mapped !== name) {
+       // #2547: `e?.old`, not `e.old` — `??` guards the value, not the
+       // dereference, so a NULLISH entry (`edit: [null]`) threw a TypeError
+       // here. normalizeKimiPayload runs before any tool dispatch, so that throw
+--- a/hooks/dist/gsd-write-guard.js
++++ b/hooks/dist/gsd-write-guard.js
+@@ -190,17 +190,23 @@
+ // on Kimi. The tool_input field names differ as well (kimi-cli
+ // src/kimi_cli/tools/file/write.py): WriteFile takes `path`/`content`, and
+ // kimi-cli's hooks/events.py forwards tool_input verbatim, so both layers need
+-// mapping. Only WriteFile is mapped: this guard exits 0 for any tool but
+-// Write, so an Edit-class mapping here would be dead code. Accepts bare and
+-// module-qualified ('kimi_cli.tools.file:WriteFile') names; unknown names fall
+-// through untouched. Inlined per guard (not hooks/lib/): hook scripts are
++// mapping. WriteFile — and, for Kimi Code (Moonshot's Node CLI) payloads
++// stamped client_type: 'kimi_code_cli', the identity entry Write — is mapped:
++// this guard exits 0 for any tool but Write, so an Edit-class mapping here
++// would be dead code. Accepts bare and module-qualified
++// ('kimi_cli.tools.file:WriteFile') names; unknown names fall through
++// untouched. Inlined per guard (not hooks/lib/): hook scripts are
+ // staged as standalone files, and a sibling require is a staging dependency
+ // that can fail silently.
+ // A Map, not an object literal: bare bracket lookup resolves prototype keys
+ // ('constructor', '__proto__', 'toString') to truthy functions/objects, so the
+ // !mapped fall-through never fires for them; Map.get returns undefined (same
+ // shape as canonicalizeRuntimeName in src/runtime-name-policy.cts).
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write']]);
++// Identity entry for Kimi Code (Moonshot's Node CLI — distinct from the
++// Python kimi-cli above): its hook payloads already say 'Write' but keep
++// kimi-cli's field shapes (`path`, not `file_path`), so they need the field
++// mapping below. Engages only on client_type: 'kimi_code_cli' — see the gate.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['Write', 'Write']]);
+ function normalizeKimiPayload(data) {
+   // #2595: total over everything JSON can express — JSON.parse('null') is
+   // null, and reading .tool_name off a primitive would throw into the outer
+@@ -209,8 +215,14 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // Identity-hit gate (see the comment above the map): only Kimi Code stamps
++  // client_type: 'kimi_code_cli' into its hook payloads; a native Claude Code
++  // Write (whose file_path is what the runtime executes on) must pass through
++  // BEFORE the #2547-authoritative `path` overwrite below can shadow it.
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   const input = data.tool_input;
+   if (input && typeof input === 'object') {
+--- a/hooks/dist/gsd-workflow-guard.js
++++ b/hooks/dist/gsd-workflow-guard.js
+@@ -201,7 +201,13 @@
+ // ('constructor', '__proto__', 'toString') to truthy functions/objects, so the
+ // !mapped fall-through never fires for them; Map.get returns undefined (same
+ // shape as canonicalizeRuntimeName in src/runtime-name-policy.cts).
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash']]);
++// Identity entries (Write/Edit/Read/Bash → themselves) serve Kimi Code,
++// Moonshot's Node CLI — distinct from the Python kimi-cli the rename entries
++// target. Its hook payloads already carry Claude-style tool names but keep
++// kimi-cli's field shapes (`path`, not `file_path`; `tool_output`, not
++// `tool_response`), so they need the field mapping below without a rename.
++// They engage only on client_type: 'kimi_code_cli' — see normalizeKimiPayload.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash'], ['Write', 'Write'], ['Edit', 'Edit'], ['Read', 'Read'], ['Bash', 'Bash']]);
+ function normalizeKimiPayload(data) {
+   // #2595 (review nit): `JSON.parse('null')` is null, and null/primitive
+   // payloads reached the `data.tool_name` read below and threw — falsifying
+@@ -212,8 +218,18 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // An identity hit (mapped === name) is ambiguous: Claude Code and Kimi Code
++  // share this tool vocabulary. Only Kimi Code stamps client_type:
++  // 'kimi_code_cli' into every hook payload (Claude Code's hook-input schema
++  // has no client_type field), and only Kimi Code shapes the fields
++  // kimi-cli-style — a native Claude Code payload must return BEFORE the
++  // mapping below runs, where `file_path` is what the runtime executes on and
++  // the #2547-authoritative `path` overwrite would let a model-supplied
++  // `path` shadow it (the mirror image of the kimi-cli bypass #2547 closed).
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   if (data.tool_response === undefined && data.tool_output !== undefined) {
+     data.tool_response = data.tool_output;
+@@ -243,7 +259,11 @@
+     }
+     const edits = Array.isArray(input.edit) ? input.edit
+       : (input.edit && typeof input.edit === 'object') ? [input.edit] : [];
+-    if (edits.length) {
++    // mapped !== name: only kimi-cli-vocabulary payloads carry `edit`; on a
++    // Kimi Code identity payload old_string/new_string are ALREADY the
++    // authoritative fields, so a spurious model-supplied `edit` must not be
++    // reconstructed over them (the same shadowing class as #2547, mirrored).
++    if (edits.length && mapped !== name) {
+       // #2547: `e?.old`, not `e.old` — `??` guards the value, not the
+       // dereference, so a NULLISH entry (`edit: [null]`) threw a TypeError
+       // here. normalizeKimiPayload runs before any tool dispatch, so that throw
+--- a/hooks/dist/gsd-read-injection-scanner.js
++++ b/hooks/dist/gsd-read-injection-scanner.js
+@@ -142,7 +142,13 @@
+ // ('constructor', '__proto__', 'toString') to truthy functions/objects, so the
+ // !mapped fall-through never fires for them; Map.get returns undefined (same
+ // shape as canonicalizeRuntimeName in src/runtime-name-policy.cts).
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash']]);
++// Identity entries (Write/Edit/Read/Bash → themselves) serve Kimi Code,
++// Moonshot's Node CLI — distinct from the Python kimi-cli the rename entries
++// target. Its hook payloads already carry Claude-style tool names but keep
++// kimi-cli's field shapes (`path`, not `file_path`; `tool_output`, not
++// `tool_response`), so they need the field mapping below without a rename.
++// They engage only on client_type: 'kimi_code_cli' — see normalizeKimiPayload.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash'], ['Write', 'Write'], ['Edit', 'Edit'], ['Read', 'Read'], ['Bash', 'Bash']]);
+ function normalizeKimiPayload(data) {
+   // #2595 (review nit): `JSON.parse('null')` is null, and null/primitive
+   // payloads reached the `data.tool_name` read below and threw — falsifying
+@@ -153,8 +159,18 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // An identity hit (mapped === name) is ambiguous: Claude Code and Kimi Code
++  // share this tool vocabulary. Only Kimi Code stamps client_type:
++  // 'kimi_code_cli' into every hook payload (Claude Code's hook-input schema
++  // has no client_type field), and only Kimi Code shapes the fields
++  // kimi-cli-style — a native Claude Code payload must return BEFORE the
++  // mapping below runs, where `file_path` is what the runtime executes on and
++  // the #2547-authoritative `path` overwrite would let a model-supplied
++  // `path` shadow it (the mirror image of the kimi-cli bypass #2547 closed).
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   if (data.tool_response === undefined && data.tool_output !== undefined) {
+     data.tool_response = data.tool_output;
+@@ -184,7 +200,11 @@
+     }
+     const edits = Array.isArray(input.edit) ? input.edit
+       : (input.edit && typeof input.edit === 'object') ? [input.edit] : [];
+-    if (edits.length) {
++    // mapped !== name: only kimi-cli-vocabulary payloads carry `edit`; on a
++    // Kimi Code identity payload old_string/new_string are ALREADY the
++    // authoritative fields, so a spurious model-supplied `edit` must not be
++    // reconstructed over them (the same shadowing class as #2547, mirrored).
++    if (edits.length && mapped !== name) {
+       // #2547: `e?.old`, not `e.old` — `??` guards the value, not the
+       // dereference, so a NULLISH entry (`edit: [null]`) threw a TypeError
+       // here. normalizeKimiPayload runs before any tool dispatch, so that throw
+--- a/hooks/dist/gsd-secret-read-guard.js
++++ b/hooks/dist/gsd-secret-read-guard.js
+@@ -944,7 +944,13 @@
+ // tests/kimi-guard-normalization-parity.test.cjs — do not edit locally).
+ // Grep keeps its name on Kimi and is not in the map; bareToolName() above
+ // strips the module prefix for it.
+-const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash']]);
++// Identity entries (Write/Edit/Read/Bash → themselves) serve Kimi Code,
++// Moonshot's Node CLI — distinct from the Python kimi-cli the rename entries
++// target. Its hook payloads already carry Claude-style tool names but keep
++// kimi-cli's field shapes (`path`, not `file_path`; `tool_output`, not
++// `tool_response`), so they need the field mapping below without a rename.
++// They engage only on client_type: 'kimi_code_cli' — see normalizeKimiPayload.
++const KIMI_TOOL_NAMES = new Map([['WriteFile', 'Write'], ['StrReplaceFile', 'Edit'], ['ReadFile', 'Read'], ['Shell', 'Bash'], ['Write', 'Write'], ['Edit', 'Edit'], ['Read', 'Read'], ['Bash', 'Bash']]);
+ function normalizeKimiPayload(data) {
+   // #2595 (review nit): `JSON.parse('null')` is null, and null/primitive
+   // payloads reached the `data.tool_name` read below and threw — falsifying
+@@ -955,8 +961,18 @@
+   if (data === null || typeof data !== 'object') return data;
+   const raw = data.tool_name;
+   if (typeof raw !== 'string') return data;
+-  const mapped = KIMI_TOOL_NAMES.get(raw.slice(raw.lastIndexOf(':') + 1));
++  const name = raw.slice(raw.lastIndexOf(':') + 1);
++  const mapped = KIMI_TOOL_NAMES.get(name);
+   if (!mapped) return data;
++  // An identity hit (mapped === name) is ambiguous: Claude Code and Kimi Code
++  // share this tool vocabulary. Only Kimi Code stamps client_type:
++  // 'kimi_code_cli' into every hook payload (Claude Code's hook-input schema
++  // has no client_type field), and only Kimi Code shapes the fields
++  // kimi-cli-style — a native Claude Code payload must return BEFORE the
++  // mapping below runs, where `file_path` is what the runtime executes on and
++  // the #2547-authoritative `path` overwrite would let a model-supplied
++  // `path` shadow it (the mirror image of the kimi-cli bypass #2547 closed).
++  if (mapped === name && data.client_type !== 'kimi_code_cli') return data;
+   data.tool_name = mapped;
+   if (data.tool_response === undefined && data.tool_output !== undefined) {
+     data.tool_response = data.tool_output;
+@@ -986,7 +1002,11 @@
+     }
+     const edits = Array.isArray(input.edit) ? input.edit
+       : (input.edit && typeof input.edit === 'object') ? [input.edit] : [];
+-    if (edits.length) {
++    // mapped !== name: only kimi-cli-vocabulary payloads carry `edit`; on a
++    // Kimi Code identity payload old_string/new_string are ALREADY the
++    // authoritative fields, so a spurious model-supplied `edit` must not be
++    // reconstructed over them (the same shadowing class as #2547, mirrored).
++    if (edits.length && mapped !== name) {
+       // #2547: `e?.old`, not `e.old` — `??` guards the value, not the
+       // dereference, so a NULLISH entry (`edit: [null]`) threw a TypeError
+       // here. normalizeKimiPayload runs before any tool dispatch, so that throw
