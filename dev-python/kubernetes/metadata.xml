@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+
+<pkgmetadata>
+  <longdescription>
+    Official Python client library for the Kubernetes API. Provides
+    programmatic access to the full Kubernetes API including pods,
+    deployments, services, and custom resources.
+  </longdescription>
+  <use>
+    <flag name="google-auth">
+      Enable Google Cloud authentication via
+      <pkg>dev-python/google-auth</pkg>
+    </flag>
+  </use>
+  <upstream>
+    <remote-id type="pypi">kubernetes</remote-id>
+    <remote-id type="github">kubernetes-client/python</remote-id>
+  </upstream>
+</pkgmetadata>
