@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+
+<pkgmetadata>
+  <longdescription>
+    gomobile is Google's official Go mobile toolchain. It drives the
+    cross-compilation of Go code for Android (APK / AAR) and iOS (.app /
+    framework) targets and generates language bindings (Java, Objective-C)
+    from Go packages. Two binaries ship: `gomobile` (build/bind/init
+    orchestrator) and `gobind` (binding generator). Pure Go with no native
+    linkage of its own; invokes Android NDK and/or Xcode at the user's
+    request when producing mobile artifacts. Upstream uses Go pseudo-
+    versions only — this ebuild pins a specific snapshot commit.
+  </longdescription>
+  <upstream>
+    <bugs-to>https://github.com/golang/go/issues</bugs-to>
+    <doc>https://pkg.go.dev/golang.org/x/mobile/cmd/gomobile</doc>
+    <remote-id type="github">golang/mobile</remote-id>
+  </upstream>
+</pkgmetadata>
