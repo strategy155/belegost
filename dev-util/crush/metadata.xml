@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+
+<pkgmetadata>
+  <longdescription>
+    Crush is a terminal-native AI coding agent from Charm. It speaks to
+    multiple LLM providers (Anthropic, OpenAI, Google, Bedrock, Vertex AI,
+    local Ollama/OpenAI-compatible endpoints), keeps per-project session
+    state, integrates with editors via LSP, and exposes MCP servers for
+    extensibility. Written in Go with a Bubble Tea TUI.
+  </longdescription>
+  <upstream>
+    <bugs-to>https://github.com/charmbracelet/crush/issues</bugs-to>
+    <doc>https://github.com/charmbracelet/crush#readme</doc>
+    <remote-id type="github">charmbracelet/crush</remote-id>
+  </upstream>
+</pkgmetadata>
