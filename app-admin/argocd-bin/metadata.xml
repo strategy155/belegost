@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+
+<pkgmetadata>
+  <longdescription>
+    Argo CD is a declarative, GitOps-style continuous delivery tool for
+    Kubernetes — application state lives in a git repo, and an in-cluster
+    controller reconciles the live cluster against that desired state.
+    This package ships the upstream argocd CLI binary (linux/amd64 and
+    linux/arm64), which is the local client for talking to an Argo CD
+    controller (over the API server, or directly to Kubernetes via
+    --core mode). Source is available (Apache-2.0, Go) but a source
+    build would require a multi-hundred-MB vendor tarball; the prebuilt
+    binary upstream releases is statically linked and matches what
+    every other distribution packages.
+  </longdescription>
+  <upstream>
+    <bugs-to>https://github.com/argoproj/argo-cd/issues</bugs-to>
+    <doc>https://argo-cd.readthedocs.io</doc>
+    <remote-id type="github">argoproj/argo-cd</remote-id>
+  </upstream>
+</pkgmetadata>
