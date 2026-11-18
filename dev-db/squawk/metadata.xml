@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+
+<pkgmetadata>
+  <longdescription>
+    Squawk is a linter for PostgreSQL migrations that catches unsafe
+    or problematic SQL patterns before they reach production. It
+    detects issues such as missing NOT NULL constraints, risky ALTER
+    TABLE operations, and indexes created without CONCURRENTLY.
+  </longdescription>
+  <upstream>
+    <bugs-to>https://github.com/sbdchd/squawk/issues</bugs-to>
+    <remote-id type="github">sbdchd/squawk</remote-id>
+  </upstream>
+</pkgmetadata>
