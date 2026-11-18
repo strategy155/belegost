@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    GSD Core (Git. Ship. Done.) is a meta-prompting, context-engineering and
+    spec-driven development system for AI coding agents including Claude Code,
+    OpenCode, Gemini CLI, Codex and others. It drives agents through a
+    disciplined discuss/plan/execute/verify/ship phase loop, running heavy work
+    in fresh-context subagents to avoid context-window quality degradation. It
+    is the open continuation of the now-deprecated get-shit-done-cc.
+  </longdescription>
+  <upstream>
+    <bugs-to>https://github.com/open-gsd/gsd-core/issues</bugs-to>
+    <remote-id type="github">open-gsd/gsd-core</remote-id>
+  </upstream>
+</pkgmetadata>
