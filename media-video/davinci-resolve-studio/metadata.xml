@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    DaVinci Resolve Studio is Blackmagic Design's professional editing, color
+    correction, visual effects (Fusion), motion graphics and audio
+    post-production (Fairlight) suite. This package repackages the official
+    Linux installer; the Studio edition requires a purchased license key or
+    USB dongle for activation.
+  </longdescription>
+  <use>
+    <flag name="developer">Include developer examples and documentation (scripting, codec plugin SDK).</flag>
+  </use>
+</pkgmetadata>

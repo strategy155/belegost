@@ -1,0 +1,3 @@
+# DaVinci Resolve Studio USB license dongle (Feitian, vendor 096e): give the
+# desktop user raw USB access, as Blackmagic's post_install.sh does.
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="096e", MODE="0666"
