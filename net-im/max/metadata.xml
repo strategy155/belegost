@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    MAX is a messenger and calls platform by VK (max.ru). This package
+    repackages the official proprietary Linux desktop client from the
+    vendor's apt repository. The application bundles its own Qt 6 runtime
+    (including QtWebEngine) and a voice/video service helper with ML-based
+    audio enhancement models.
+  </longdescription>
+  <upstream>
+    <doc>https://max.ru/help</doc>
+  </upstream>
+</pkgmetadata>
