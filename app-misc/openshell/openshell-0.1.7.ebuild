@@ -49,7 +49,13 @@ pkg_setup() {
 }
 
 src_install() {
-	cargo_src_install
+	# Virtual workspace: cargo install refuses the root manifest, so
+	# install per member (cf. sys-kernel/scx-loader, app-editors/helix).
+	cargo_src_install --path crates/openshell-cli
+	cargo_src_install --path crates/openshell-gateway
+	cargo_src_install --path crates/openshell-prover-cli
+	cargo_src_install --path crates/openshell-sandbox
+	cargo_src_install --path crates/openshell-supervisor
 	einstalldocs
 	dodoc deploy/rpm/QUICKSTART.md deploy/rpm/CONFIGURATION.md deploy/rpm/TROUBLESHOOTING.md
 
