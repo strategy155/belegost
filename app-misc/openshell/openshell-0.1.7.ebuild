@@ -45,6 +45,7 @@ pkg_setup() {
 	# Distro protobuf compiler instead of protoc-bin-vendored (honoured
 	# since v0.1.5; cf. app-misc/anki's PROTOC_BINARY for the same idea).
 	export PROTOC="${BROOT}/usr/bin/protoc"
+	rust_pkg_setup
 }
 
 src_install() {
