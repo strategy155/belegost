@@ -48,6 +48,13 @@ pkg_setup() {
 	rust_pkg_setup
 }
 
+src_prepare() {
+	# Stamp the version as upstream's CI does: tag archives carry the
+	# 0.0.0 placeholder and CARGO_PKG_VERSION is what binaries report.
+	sed -i "s/^version = \"0.0.0\"$/version = \"${PV}\"/" Cargo.toml || die
+	cargo_src_prepare
+}
+
 src_install() {
 	# Virtual workspace: cargo install refuses the root manifest, so
 	# install per member (cf. sys-kernel/scx-loader, app-editors/helix).
