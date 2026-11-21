@@ -52,7 +52,7 @@ src_prepare() {
 	# Stamp the version as upstream's CI does: tag archives carry the
 	# 0.0.0 placeholder and CARGO_PKG_VERSION is what binaries report.
 	sed -i "s/^version = \"0.0.0\"$/version = \"${PV}\"/" Cargo.toml || die
-	cargo_src_prepare
+	default
 }
 
 src_install() {
